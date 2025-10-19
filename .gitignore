@@ -1,6 +1,27 @@
-# Ignorar archivos temporales de Visual Studio
+# Archivos de Visual Studio
 .vs/
 *.suo
 *.user
 *.userosscache
 *.sln.docstates
+
+# Carpetas de compilación
+bin/
+obj/
+Debug/
+Release/
+
+# Archivos temporales
+*.log
+*.tmp
+*.bak
+*.dbmdl
+
+# Archivos específicos de SQL Server
+*.mdf
+*.ldf
+
+# Configuración local
+*.config
+*.local
+*.vscode/
