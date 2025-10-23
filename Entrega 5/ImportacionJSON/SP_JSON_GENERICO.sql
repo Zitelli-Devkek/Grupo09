@@ -5,7 +5,6 @@ BEGIN
     SET NOCOUNT ON;
 
     DECLARE @JsonData NVARCHAR(MAX); --es una variable que guarda todo el contenido del JSON 
-    DECLARE @ErrorMessage NVARCHAR(500);
 
     BEGIN TRY
 
@@ -24,14 +23,14 @@ BEGIN
         USING (
             SELECT *
             FROM OPENJSON(@JsonData) --El OPENJSON parsea el texto y lo convierte en filas/columnas
-            WITH (--WITH lo que hace es, armar la estructura.Le dice que datos quiero extraer y, cÛmo debe ser la tabla virtual resultante.                
+            WITH (--WITH lo que hace es, armar la estructura.Le dice que datos quiero extraer y, c√≥mo debe ser la tabla virtual resultante.                
                 [ID] INT           '$.campo', --donde puse campo hay que poner el que corresponda al nombre de columna
                 [campo1] tipodedato  '$.campo',    --tipodedato hay que poner el que corresponda segun el JSON
                 [campo2] tipodedato '$.campo',
             )
         ) AS TablaRef
 
-        ON (COMPARACION.[ID] = TablaRef.[ID]) --Condicion de duplicado (no se si est· bien)
+        ON (COMPARACION.[ID] = TablaRef.[ID]) --Condicion de duplicado (no se si est√° bien)
 
      
         WHEN NOT MATCHED BY COMPARACION THEN --si no hay coincidencias hace el insert
@@ -48,13 +47,13 @@ BEGIN
         
         COMMIT TRANSACTION;--para confirmar transaccion si se pudo ejecutar bien
 
-        PRINT 'Se importÛ correctamente el JSON'; --esto si queremos lo sacamos, lo puse por si queremos saberlo
+        PRINT 'Se import√≥ correctamente el JSON'; --esto si queremos lo sacamos, lo puse por si queremos saberlo
 
     END TRY
     BEGIN CATCH
-        IF @@TRANCOUNT > 0 --es una variable del sistema que retiene la cantidad de transacciones que est·n abiertas ahpora
+        IF @@TRANCOUNT > 0 --es una variable del sistema que retiene la cantidad de transacciones que est√°n abiertas ahpora
             ROLLBACK TRANSACTION; --si falla, hago ROLLBACK para abortar transaccion
-        PRINT 'OcurriÛ un error al querer importar el JSON'
+        PRINT 'Ocurri√≥ un error al querer importar el JSON'
         THROW;
     END CATCH;
 
