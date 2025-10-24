@@ -6,7 +6,7 @@ Este repositorio contiene el código fuente del Trabajo Práctico Integrador par
 
 | Damián Jiménez | shadowcode23 |
 | Gonzalo Mendoza | GonzaMendozaa |
-| Demis Colman |  |
+| Demis Colman | Demiscolman |
 | Mateo Feiertag | mateofeiertag |
 | Lautaro Suriano | LauSuri |
 | Emanuel Zitelli | emanuel-zitelli |
