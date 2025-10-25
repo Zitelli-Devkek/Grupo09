@@ -3,7 +3,3 @@ GO
 
 USE AltosSaintJust
 GO
-
-CREATE SCHEMA Consorcio
-GO
-

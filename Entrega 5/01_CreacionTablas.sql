@@ -1,7 +1,7 @@
 USE AltosSaintJust
 GO
 
-CREATE TABLE Consorcio.Proveedor (
+CREATE TABLE Proveedor (
     id_proveedor INT IDENTITY(1,1) PRIMARY KEY,
     nombre NVARCHAR(100) NOT NULL,
     nro_cuenta VARCHAR(20) NULL,
@@ -11,7 +11,7 @@ CREATE TABLE Consorcio.Proveedor (
     telefono VARCHAR(20) NULL
 );
 
-CREATE TABLE Consorcio.Consorcio (
+CREATE TABLE Consorcio (
     id_consorcio INT IDENTITY(1,1) PRIMARY KEY,
     nombre NVARCHAR(100) NOT NULL,
     direccion NVARCHAR(100) NULL,
@@ -20,7 +20,7 @@ CREATE TABLE Consorcio.Consorcio (
     admin_email NVARCHAR(100) NULL
 );
 
-CREATE TABLE Consorcio.Gasto_Extraordinario (
+CREATE TABLE Gasto_Extraordinario (
     id_gasto_extraordinario INT IDENTITY(1,1) PRIMARY KEY,
     id_consorcio INT NOT NULL,
     id_proveedor INT NOT NULL,
@@ -30,12 +30,12 @@ CREATE TABLE Consorcio.Gasto_Extraordinario (
     importe DECIMAL(12,2) NOT NULL CHECK (importe >= 0),
     CONSTRAINT CK_GastoExtra_Cuotas CHECK (nro_cuota <= total_cuotas),
     CONSTRAINT FK_GastoExtra_Consorcio FOREIGN KEY (id_consorcio) 
-        REFERENCES Consorcio.Consorcio(id_consorcio),
+        REFERENCES Consorcio(id_consorcio),
     CONSTRAINT FK_GastoExtra_Proveedor FOREIGN KEY (id_proveedor) 
-        REFERENCES Consorcio.Proveedor(id_proveedor)
+        REFERENCES Proveedor(id_proveedor)
 );
 
-CREATE TABLE Consorcio.Gasto_Ordinario (
+CREATE TABLE Gasto_Ordinario (
     id_gasto_ordinario INT IDENTITY(1,1) PRIMARY KEY,
     id_consorcio INT NOT NULL,
     id_proveedor INT NOT NULL,
@@ -44,12 +44,12 @@ CREATE TABLE Consorcio.Gasto_Ordinario (
     detalle NVARCHAR(100) NULL,
     importe DECIMAL(12,2) NOT NULL CHECK (importe >= 0),
     CONSTRAINT FK_GastoOrdinario_Consorcio FOREIGN KEY (id_consorcio) 
-        REFERENCES Consorcio.Consorcio(id_consorcio),
+        REFERENCES Consorcio(id_consorcio),
     CONSTRAINT FK_GastoOrdinario_Proveedor FOREIGN KEY (id_proveedor) 
-        REFERENCES Consorcio.Proveedor(id_proveedor)
+        REFERENCES Proveedor(id_proveedor)
 );
 
-CREATE TABLE Consorcio.Servicio (
+CREATE TABLE Servicio (
     id_servicio INT IDENTITY(1,1) PRIMARY KEY,
     nro_cuenta INT NOT NULL,
     mes TINYINT NOT NULL CHECK (mes BETWEEN 1 AND 12),
@@ -57,7 +57,7 @@ CREATE TABLE Consorcio.Servicio (
     valor DECIMAL(12,2) NOT NULL
 );
 
-CREATE TABLE Consorcio.Persona
+CREATE TABLE Persona
 (
     DNI INT 
         CONSTRAINT PK_Persona PRIMARY KEY,
@@ -78,10 +78,10 @@ CREATE TABLE Consorcio.Persona
         CONSTRAINT CK_Persona_Telefono CHECK (telefono IS NULL OR LEN(telefono) BETWEEN 8 AND 15)
 );
 
-CREATE TABLE Consorcio.cuenta_bancaria
+CREATE TABLE cuenta_bancaria
 (
     DNI INT NOT NULL
-        CONSTRAINT FK_Cuenta_Persona FOREIGN KEY REFERENCES Consorcio.Persona(DNI),
+        CONSTRAINT FK_Cuenta_Persona FOREIGN KEY REFERENCES Persona(DNI),
         CONSTRAINT CK_Cuenta_DNI CHECK (DNI BETWEEN 10000000 AND 99999999),
 
     cbu_cvu BIGINT NOT NULL,
@@ -89,12 +89,12 @@ CREATE TABLE Consorcio.cuenta_bancaria
     CONSTRAINT PK_Cuenta PRIMARY KEY (DNI, cbu_cvu)
 );
 
-CREATE TABLE Consorcio.unidad_funcional
+CREATE TABLE unidad_funcional
 (
     id_uf INT IDENTITY(1,1) PRIMARY KEY,
 
     id_consorcio INT NOT NULL
-        CONSTRAINT FK_UF_Consorcio FOREIGN KEY REFERENCES Consorcio.Consorcio(id_consorcio),
+        CONSTRAINT FK_UF_Consorcio FOREIGN KEY REFERENCES Consorcio(id_consorcio),
 
     nr_uf INT NOT NULL
         CONSTRAINT CK_UF_Numero CHECK (nr_uf > 0),
@@ -117,15 +117,15 @@ CREATE TABLE Consorcio.unidad_funcional
     obs VARCHAR(200) NULL
 );
 
-CREATE TABLE Consorcio.expensa
+CREATE TABLE expensa
 (
     id_expensa INT IDENTITY(1,1) PRIMARY KEY,
 
     id_uf INT NOT NULL
-        CONSTRAINT FK_Expensa_UF FOREIGN KEY REFERENCES Consorcio.unidad_funcional(id_uf),
+        CONSTRAINT FK_Expensa_UF FOREIGN KEY REFERENCES unidad_funcional(id_uf),
 
     DNI INT NOT NULL
-        CONSTRAINT FK_Expensa_Persona FOREIGN KEY REFERENCES Consorcio.Persona(DNI)
+        CONSTRAINT FK_Expensa_Persona FOREIGN KEY REFERENCES Persona(DNI)
         CONSTRAINT CK_Expensa_DNI CHECK (DNI BETWEEN 10000000 AND 99999999),
 
     mes TINYINT NOT NULL
@@ -144,12 +144,12 @@ CREATE TABLE Consorcio.expensa
 );
 
 
-CREATE TABLE Consorcio.pago
+CREATE TABLE pago
 (
     id_pago INT IDENTITY(1,1) PRIMARY KEY,
 
     id_expensa INT NOT NULL
-        CONSTRAINT FK_Pago_Expensa FOREIGN KEY REFERENCES Consorcio.expensa(id_expensa),
+        CONSTRAINT FK_Pago_Expensa FOREIGN KEY REFERENCES expensa(id_expensa),
 
     fecha DATE NOT NULL
         CONSTRAINT CK_Pago_Fecha CHECK (fecha <= GETDATE()),
@@ -161,12 +161,12 @@ CREATE TABLE Consorcio.pago
         CONSTRAINT CK_Pago_Valor CHECK (valor > 0)
 );
 
-CREATE TABLE Consorcio.pago_importado
+CREATE TABLE pago_importado
 (
     id_pago_imp INT IDENTITY(1,1) PRIMARY KEY,
 
     id_pago INT NOT NULL
-        CONSTRAINT FK_PagoImp_Pago FOREIGN KEY REFERENCES Consorcio.pago(id_pago),
+        CONSTRAINT FK_PagoImp_Pago FOREIGN KEY REFERENCES pago(id_pago),
 
     fecha_importacion DATE NOT NULL
         CONSTRAINT CK_PagoImp_FImport CHECK (fecha_importacion <= GETDATE()),
@@ -184,7 +184,7 @@ CREATE TABLE Consorcio.pago_importado
         CONSTRAINT CK_PagoImp_Valor CHECK (valor > 0)
 );
 
-CREATE TABLE Consorcio.Expensa_Detalle (
+CREATE TABLE Expensa_Detalle (
     id_detalle INT IDENTITY(1,1) PRIMARY KEY,
     id_expensa INT NOT NULL,
     id_gasto_ordinario INT NULL,
@@ -193,9 +193,9 @@ CREATE TABLE Consorcio.Expensa_Detalle (
     fecha_venc DATE NOT NULL,
     importe_uf DECIMAL(12,2) NOT NULL CHECK (importe_uf >= 0),
     CONSTRAINT FK_ExpensaDetalle_Expensa FOREIGN KEY (id_expensa)
-        REFERENCES Consorcio.Expensa(id_expensa),
+        REFERENCES Expensa(id_expensa),
     CONSTRAINT FK_ExpensaDetalle_GastoOrdinario FOREIGN KEY (id_gasto_ordinario)
-        REFERENCES Consorcio.Gasto_Ordinario(id_gasto_ordinario),
+        REFERENCES Gasto_Ordinario(id_gasto_ordinario),
     CONSTRAINT FK_ExpensaDetalle_GastoExtraordinario FOREIGN KEY (id_gasto_extraordinario)
-        REFERENCES Consorcio.Gasto_Extraordinario(id_gasto_extraordinario)
+        REFERENCES Gasto_Extraordinario(id_gasto_extraordinario)
 );
