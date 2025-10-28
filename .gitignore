@@ -25,3 +25,4 @@ Release/
 *.config
 *.local
 *.vscode/
+/Entrega 5/ImportacionJSON/SP_JSON_GENERICO.sql
