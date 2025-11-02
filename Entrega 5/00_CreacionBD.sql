@@ -3,3 +3,5 @@ GO
 
 USE AltosSaintJust
 GO
+
+drop database AltosSaintJust
