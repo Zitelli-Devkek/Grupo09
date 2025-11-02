@@ -1,23 +1,115 @@
+CREATE DATABASE pruebaImportacionTXT
+GO
+
+USE pruebaImportacionTXT
+GO
+
+-- Borra las tablas si ya existen, para poder probar de cero
+IF OBJECT_ID('dbo.Complemento', 'U') IS NOT NULL
+    DROP TABLE dbo.Complemento;
+GO
+IF OBJECT_ID('dbo.unidad_funcional', 'U') IS NOT NULL
+    DROP TABLE dbo.unidad_funcional;
+GO
+IF OBJECT_ID('dbo.consorcio', 'U') IS NOT NULL
+    DROP TABLE dbo.consorcio;
+GO
+
+
+-- 1. Tabla principal (Maestro)
+CREATE TABLE dbo.consorcio (
+    id_consorcio INT IDENTITY(1,1) PRIMARY KEY,
+    
+    -- Columna usada para el JOIN en el SP.
+    -- La pongo UNIQUE para asegurar que no haya duplicados.
+    nombre NVARCHAR(100) NOT NULL UNIQUE, 
+    
+    -- Columnas del diagrama
+    direccion NVARCHAR(255),
+    admin_nombre NVARCHAR(100),
+    admin_cuit VARCHAR(13),
+    admin_email NVARCHAR(100)
+);
+GO
+
+-- 2. Tabla de detalle
+CREATE TABLE dbo.unidad_funcional (
+    id_uf INT IDENTITY(1,1) PRIMARY KEY,
+    
+    -- Clave foránea que la conecta con 'consorcio'
+    id_consorcio INT NOT NULL, 
+    
+    nr_uf INT,
+    piso NVARCHAR(10),
+    departamento NVARCHAR(10),
+    
+    -- Debe permitir NULL por si el TRY_CONVERT falla
+    coeficiente DECIMAL(10, 2) NULL, 
+    
+    m2 INT,
+    
+    -- Constraint FK
+    CONSTRAINT FK_unidad_funcional_consorcio 
+        FOREIGN KEY (id_consorcio) 
+        REFERENCES dbo.consorcio(id_consorcio),
+        
+    -- Creamos una restricción única para la combinación
+    -- 'id_consorcio' y 'nr_uf', que es lo que usa tu SP
+    -- para evitar duplicados.
+    CONSTRAINT UQ_consorcio_nruf UNIQUE (id_consorcio, nr_uf)
+);
+GO
+
+-- 3. Tabla de Complementos (Bauleras/Cocheras)
+CREATE TABLE dbo.Complemento (
+    id_complemento INT IDENTITY(1,1) PRIMARY KEY,
+    
+    -- Clave foránea que la conecta con 'unidad_funcional'
+    id_uf INT NOT NULL, 
+    
+    m2 INT,
+    
+    -- Columna para saber si es 'Baulera' o 'Cochera'
+    tipo_complemento NVARCHAR(50) NOT NULL, 
+    
+    -- Constraint FK
+    CONSTRAINT FK_Complemento_unidad_funcional
+        FOREIGN KEY (id_uf)
+        REFERENCES dbo.unidad_funcional(id_uf),
+        
+    -- Evita duplicados (ej: 2 bauleras para la misma UF)
+    CONSTRAINT UQ_uf_tipo UNIQUE (id_uf, tipo_complemento)
+);
+GO
+
+PRINT 'Tablas creadas: consorcio, unidad_funcional, Complemento.';
+
+-------------------------------------------------------------------------------------------
+
 CREATE OR ALTER PROCEDURE sp_ImportarDatosTXT
     @RutaArchivo NVARCHAR(500),
-    @Delimitador CHAR(1) = '\t'
+    @Delimitador CHAR(1) = NULL--como no se puede poner (char(9)) que referencia al ASCII lo asigno abajo
 AS
 BEGIN
     SET NOCOUNT ON;
 
+   
+    IF @Delimitador IS NULL
+        SET @Delimitador = CHAR(9); -- Asigna TAB (CHAR(9)) por defecto si no se pasa el parámetro (TAB del ASCII)
+
     BEGIN TRANSACTION;
     BEGIN TRY
 
-        --Primero creo la tabla temporal (la borro si ya existe una con ese nombre)
-        IF OBJECT_ID('tempdb..#tablaTemporal') IS NOT NULL
+       
+        IF OBJECT_ID('tempdb..#tablaTemporal') IS NOT NULL --si ya esxiste una tabla temporal con ese nombre, la borra
             DROP TABLE #tablaTemporal;
 
-        CREATE TABLE #tablaTemporal (
+        CREATE TABLE #tablaTemporal (--crea la tabla temporal
             [Nombre del consorcio]  NVARCHAR(100),
             [nroUnidadFuncional]    INT,
             [Piso]                  NVARCHAR(10),
             [departamento]          NVARCHAR(10),
-            [coeficiente]           NVARCHAR(50), --Pasar como texto porque en el archivo hay una ',' cuando tiene que ir '.'
+            [coeficiente]           NVARCHAR(50),
             [m2_unidad_funcional]   INT,
             [bauleras]              VARCHAR(2),
             [cochera]               VARCHAR(2),
@@ -25,162 +117,143 @@ BEGIN
             [m2_cochera]            INT
         );
 
+       
+        DECLARE @Sql NVARCHAR(MAX);--BULK INSERT a tabla temporal
+        DECLARE @RutaSegura NVARCHAR(1000);
+        --para "escapar" de '' uso el replace de abajo
+        SET @RutaSegura = N'''' + REPLACE(@RutaArchivo, '''', '''''') + N'''';--concatenar la ruta d earchivo
+        DECLARE @DelimSeguro NVARCHAR(10);
+        SET @DelimSeguro = N'''' + REPLACE(@Delimitador, '''', '''''') + N''''; --para el delimitador
 
-          --Hago el BULK INSERT
-        DECLARE @Sql NVARCHAR(MAX);
         SET @Sql = N'
             BULK INSERT #tablaTemporal
-            FROM @RutaParam
+            FROM ' + @RutaSegura + N'
             WITH (
-                FIELDTERMINATOR = @DelimParam,
-                ROWTERMINATOR = ''\n'',
+                FIELDTERMINATOR = ' + @DelimSeguro + N',
                 FIRSTROW = 2,
-                CODEPAGE = ''ACP'' -- Agregado: bueno para tildes
-            );';
+                CODEPAGE = ''ACP''
+            );';--sql dinamico
 
-        EXEC sp_executesql @Sql,
-            N'@RutaParam NVARCHAR(500), @DelimParam CHAR(1)',
-            @RutaParam = @RutaArchivo, -- Para evitar injectionSQL hago variable y la igualo al parametro de la ruta y delim
-            @DelimParam = @Delimitador; 
-            
+        EXEC sp_executesql @Sql;--ejecutar sql dinamico
         PRINT 'BULK INSERT a tabla temporal completado.';
 
-        --INSERTAR A TABLA PRINCIPAL
-        INSERT INTO dbo.consorcio (
-            nombre,
-            -- Agregar campos si hacen falta (o sea, que esten en el archivo)
+
+        INSERT INTO dbo.consorcio ( --Insertar en dbo.consorcio (Maestro)
+            nombre
         )
         SELECT
             DISTINCT 
             tt.[Nombre del consorcio]
-            -- Agregar columnas si es que agregue antes.
         FROM
             #tablaTemporal tt
         WHERE
-            -- Controla duplicados (comparando con la columna 'nombre')
-            NOT EXISTS (
+            tt.[Nombre del consorcio] IS NOT NULL --filtro para ignorar lineas en blanco
+            
+            AND NOT EXISTS (
                 SELECT *
                 FROM dbo.consorcio tp
                 WHERE tp.nombre = tt.[Nombre del consorcio]
             );
             
-        PRINT 'Inserción en dbo.consorcio completada.';
-        
-        
-        --Insertar en la Tabla de Detalle (unidad_funcional)
-        -- Inserta solo los datos de la unidad funcional, no bauleras y cocheras
 
-        INSERT INTO dbo.unidad_funcional (
-            id_consorcio,   -- FK 
-            nr_uf,          
-            piso,           
-            departamento,   
-            coeficiente,    
-            m2              
+        INSERT INTO dbo.unidad_funcional (--Insertar en dbo.unidad_funcional (Detalle)
+            id_consorcio,  nr_uf, piso, departamento, coeficiente, m2             
         )
         SELECT
-            -- Buscamos la PK (id_consorcio) de la tabla padre
             tp.id_consorcio, 
             tt.[nroUnidadFuncional],
             tt.[Piso],
             tt.[departamento],
-            -- Conversión de decimal (coma a punto, que es lo que estaba mal)
-            CONVERT(DECIMAL(10, 2), REPLACE(tt.[coeficiente], ',', '.')),
+            TRY_CONVERT(DECIMAL(10, 2), REPLACE(tt.[coeficiente], ',', '.')), 
             tt.[m2_unidad_funcional]
         FROM
             #tablaTemporal tt
-        -- JOIN para encontrar el ID del padre (usando la clave)
         JOIN
             dbo.consorcio tp ON tt.[Nombre del consorcio] = tp.nombre
         WHERE
-            -- Control de duplicados
             NOT EXISTS (
-                SELECT 1
+                SELECT *
                 FROM dbo.unidad_funcional uf
                 WHERE uf.id_consorcio = tp.id_consorcio
                   AND uf.nr_uf = tt.[nroUnidadFuncional]
-            );
+            )
+            AND TRY_CONVERT(DECIMAL(10, 2), REPLACE(tt.[coeficiente], ',', '.')) IS NOT NULL;
 
-        PRINT 'Inserción en dbo.unidad_funcional completada.';
+        PRINT 'Inserción en dbo.unidad_funcional completada (filas con error de coeficiente omitidas).';
 
-        --Insertar en la tabla baulera
+        ;WITH ComplementosAIngresar (id_uf, m2, tipo_complemento) AS (--Insertar en dbo.Complemento (Bauleras y Cocheras unificadas)
+            --Bauleras
+            SELECT
+                uf.id_uf, tt.[m2_baulera], 'Baulera' AS tipo_complemento
+            FROM
+                #tablaTemporal tt
+            JOIN 
+                dbo.consorcio c ON tt.[Nombre del consorcio] = c.nombre
+            JOIN 
+                dbo.unidad_funcional uf ON c.id_consorcio = uf.id_consorcio 
+                                        AND tt.[nroUnidadFuncional] = uf.nr_uf
+            WHERE
+                tt.[bauleras] = 'SI' AND tt.[m2_baulera] > 0
 
-        INSERT INTO dbo.baulera (
-            id_uf, -- FK unidad_funcional 
-            m2    
+            UNION ALL 
+            --Cocheras
+            SELECT
+                uf.id_uf, tt.[m2_cochera], 'Cochera' AS tipo_complemento
+            FROM
+                #tablaTemporal tt
+            JOIN 
+                dbo.consorcio c ON tt.[Nombre del consorcio] = c.nombre
+            JOIN 
+                dbo.unidad_funcional uf ON c.id_consorcio = uf.id_consorcio 
+                                        AND tt.[nroUnidadFuncional] = uf.nr_uf
+            WHERE
+                tt.[cochera] = 'SI' AND tt.[m2_cochera] > 0
+        )
+        INSERT INTO dbo.Complemento (
+            id_uf, m2, tipo_complemento
         )
         SELECT
-            --Hay que buscar el 'id_uf' (PK) que se creó
-            uf.id_uf, 
-            tt.[m2_baulera]
+            cte.id_uf, cte.m2, cte.tipo_complemento
         FROM
-            #tablaTemporal tt
-        -- Hacemos 2 JOINs para conectar el archivo temporal con la tabla de UF
-        JOIN 
-            dbo.consorcio c ON tt.[Nombre del consorcio] = c.nombre
-        JOIN 
-            dbo.unidad_funcional uf ON c.id_consorcio = uf.id_consorcio 
-                                   AND tt.[nroUnidadFuncional] = uf.nr_uf
+            ComplementosAIngresar cte
         WHERE
-            tt.[bauleras] = 'SI' -- Solo inserta si el archivo dice 'SI'
-            AND tt.[m2_baulera] > 0
-        -- Control de duplicados para la baulera
-        AND NOT EXISTS (
+            NOT EXISTS (
                 SELECT 1
-                FROM dbo.baulera b
-                WHERE b.id_uf = uf.id_uf
+                FROM dbo.Complemento comp_existente
+                WHERE comp_existente.id_uf = cte.id_uf
+                  AND comp_existente.tipo_complemento = cte.tipo_complemento
             );
 
-        PRINT 'Inserción en dbo.baulera completada.';
-
-        --INSERTA EN TABLA COCHERA
-
-        INSERT INTO dbo.cochera (
-            id_uf, -- FK unidad_funcional
-            m2     --DER
-        )
-        SELECT
-            -- Buscamos el 'id_uf' (PK) que se creó
-            uf.id_uf,
-            tt.[m2_cochera]
-        FROM
-            #tablaTemporal tt
-        --2 JOINs para conectar el archivo temporal con la tabla de UF
-        JOIN 
-            dbo.consorcio c ON tt.[Nombre del consorcio] = c.nombre
-        JOIN 
-            dbo.unidad_funcional uf ON c.id_consorcio = uf.id_consorcio 
-                 AND tt.[nroUnidadFuncional] = uf.nr_uf
-
-        WHERE
-            tt.[cochera] = 'SI' -- Solo inserta si el archivo dice 'SI'
-            AND tt.[m2_cochera] > 0
-        -- Control de duplicados para la cochera
-        AND NOT EXISTS (
-                SELECT 1
-                FROM dbo.cochera co
-                WHERE co.id_uf = uf.id_uf
-            );
-
-        PRINT 'Inserción en dbo.cochera completada.';
+        PRINT 'Inserción en dbo.Complemento (Bauleras y Cocheras) completada.';
 
         COMMIT TRANSACTION;
-        
-        PRINT 'Proceso de importación finalizado.';
+        PRINT 'Proceso de importación finalizado. Se guardaron los datos buenos.';
 
     END TRY
     BEGIN CATCH
 
-        IF @@TRANCOUNT > 0 --controla si se está ejecutando una transaccion
+        IF @@TRANCOUNT > 0
             ROLLBACK TRANSACTION;
-
-        PRINT 'Error durante la importación. Se ha revertido la transacción.';
+        PRINT 'Error crítico durante la importación. Se ha revertido la transacción.';
         THROW; 
         
     END CATCH
 
-    IF OBJECT_ID('tempdb..#tablaTemporal') IS NOT NULL
+    IF OBJECT_ID('tempdb..#tablaTemporal') IS NOT NULL--elimino tabla temporal
         DROP TABLE #tablaTemporal;
 
 END
+GO
+
+--EJECUTAR SP
+EXEC sp_ImportarDatosTXT 
+    @RutaArchivo = 'D:\Universidad\Materias\Bdd_Aplicada\Archivos\UF por consorcio.txt'
+GO
+
+--PARA VER COMO QUEDARON LAS TABLAS
+SELECT * from dbo.unidad_funcional;
+GO
+SELECT * from dbo.consorcio;
+GO
+SELECT * from dbo.Complemento;
 GO
