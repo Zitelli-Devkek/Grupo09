@@ -1,3 +1,6 @@
+USE AltosSaintJust
+GO
+
 IF COL_LENGTH('Pago','id_exp_detalle') IS NULL
 BEGIN
     ALTER TABLE Pago
@@ -6,10 +9,10 @@ BEGIN
     ALTER TABLE Pago
     ADD CONSTRAINT FK_Pago_ExpDet FOREIGN KEY (id_exp_detalle)
         REFERENCES Expensa_Detalle(id_exp_detalle);
-END;
+END
 
-CREATE INDEX IX_Pago_fecha ON Pago(fecha);
-CREATE INDEX IX_Pago_id_uf ON Pago(id_uf);
+CREATE INDEX IX_Pago_fecha ON dbo.Pago(fecha)
+CREATE INDEX IX_Pago_id_uf ON Pago(id_uf)
 CREATE INDEX IX_Pago_id_exp_detalle ON Pago(id_exp_detalle);
 
 CREATE INDEX IX_ExpDet_id_expensa ON Expensa_Detalle(id_expensa);
