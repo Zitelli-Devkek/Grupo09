@@ -1,91 +1,3 @@
-CREATE DATABASE pruebaImportacionTXT
-GO
-
-USE pruebaImportacionTXT
-GO
-
--- Borra las tablas si ya existen, para poder probar de cero
-IF OBJECT_ID('dbo.Complemento', 'U') IS NOT NULL
-    DROP TABLE dbo.Complemento;
-GO
-IF OBJECT_ID('dbo.unidad_funcional', 'U') IS NOT NULL
-    DROP TABLE dbo.unidad_funcional;
-GO
-IF OBJECT_ID('dbo.consorcio', 'U') IS NOT NULL
-    DROP TABLE dbo.consorcio;
-GO
-
-
--- 1. Tabla principal (Maestro)
-CREATE TABLE dbo.consorcio (
-    id_consorcio INT IDENTITY(1,1) PRIMARY KEY,
-    
-    -- Columna usada para el JOIN en el SP.
-    -- La pongo UNIQUE para asegurar que no haya duplicados.
-    nombre NVARCHAR(100) NOT NULL UNIQUE, 
-    
-    -- Columnas del diagrama
-    direccion NVARCHAR(255),
-    admin_nombre NVARCHAR(100),
-    admin_cuit VARCHAR(13),
-    admin_email NVARCHAR(100)
-);
-GO
-
--- 2. Tabla de detalle
-CREATE TABLE dbo.unidad_funcional (
-    id_uf INT IDENTITY(1,1) PRIMARY KEY,
-    
-    -- Clave for醤ea que la conecta con 'consorcio'
-    id_consorcio INT NOT NULL, 
-    
-    nr_uf INT,
-    piso NVARCHAR(10),
-    departamento NVARCHAR(10),
-    
-    -- Debe permitir NULL por si el TRY_CONVERT falla
-    coeficiente DECIMAL(10, 2) NULL, 
-    
-    m2 INT,
-    
-    -- Constraint FK
-    CONSTRAINT FK_unidad_funcional_consorcio 
-        FOREIGN KEY (id_consorcio) 
-        REFERENCES dbo.consorcio(id_consorcio),
-        
-    -- Creamos una restricci髇 鷑ica para la combinaci髇
-    -- 'id_consorcio' y 'nr_uf', que es lo que usa tu SP
-    -- para evitar duplicados.
-    CONSTRAINT UQ_consorcio_nruf UNIQUE (id_consorcio, nr_uf)
-);
-GO
-
--- 3. Tabla de Complementos (Bauleras/Cocheras)
-CREATE TABLE dbo.Complemento (
-    id_complemento INT IDENTITY(1,1) PRIMARY KEY,
-    
-    -- Clave for醤ea que la conecta con 'unidad_funcional'
-    id_uf INT NOT NULL, 
-    
-    m2 INT,
-    
-    -- Columna para saber si es 'Baulera' o 'Cochera'
-    tipo_complemento NVARCHAR(50) NOT NULL, 
-    
-    -- Constraint FK
-    CONSTRAINT FK_Complemento_unidad_funcional
-        FOREIGN KEY (id_uf)
-        REFERENCES dbo.unidad_funcional(id_uf),
-        
-    -- Evita duplicados (ej: 2 bauleras para la misma UF)
-    CONSTRAINT UQ_uf_tipo UNIQUE (id_uf, tipo_complemento)
-);
-GO
-
-PRINT 'Tablas creadas: consorcio, unidad_funcional, Complemento.';
-
--------------------------------------------------------------------------------------------
-
 CREATE OR ALTER PROCEDURE sp_ImportarDatosTXT
     @RutaArchivo NVARCHAR(500),
     @Delimitador CHAR(1) = NULL--como no se puede poner (char(9)) que referencia al ASCII lo asigno abajo
@@ -95,7 +7,7 @@ BEGIN
 
    
     IF @Delimitador IS NULL
-        SET @Delimitador = CHAR(9); -- Asigna TAB (CHAR(9)) por defecto si no se pasa el par醡etro (TAB del ASCII)
+        SET @Delimitador = CHAR(9); -- Asigna TAB (CHAR(9)) por defecto si no se pasa el par谩metro (TAB del ASCII)
 
     BEGIN TRANSACTION;
     BEGIN TRY
@@ -179,7 +91,7 @@ BEGIN
             )
             AND TRY_CONVERT(DECIMAL(10, 2), REPLACE(tt.[coeficiente], ',', '.')) IS NOT NULL;
 
-        PRINT 'Inserci髇 en dbo.unidad_funcional completada (filas con error de coeficiente omitidas).';
+        PRINT 'Inserci贸n en dbo.unidad_funcional completada (filas con error de coeficiente omitidas).';
 
         ;WITH ComplementosAIngresar (id_uf, m2, tipo_complemento) AS (--Insertar en dbo.Complemento (Bauleras y Cocheras unificadas)
             --Bauleras
@@ -224,17 +136,17 @@ BEGIN
                   AND comp_existente.tipo_complemento = cte.tipo_complemento
             );
 
-        PRINT 'Inserci髇 en dbo.Complemento (Bauleras y Cocheras) completada.';
+        PRINT 'Inserci贸n en dbo.Complemento (Bauleras y Cocheras) completada.';
 
         COMMIT TRANSACTION;
-        PRINT 'Proceso de importaci髇 finalizado. Se guardaron los datos buenos.';
+        PRINT 'Proceso de importaci贸n finalizado. Se guardaron los datos buenos.';
 
     END TRY
     BEGIN CATCH
 
         IF @@TRANCOUNT > 0
             ROLLBACK TRANSACTION;
-        PRINT 'Error cr韙ico durante la importaci髇. Se ha revertido la transacci髇.';
+        PRINT 'Error cr铆tico durante la importaci贸n. Se ha revertido la transacci贸n.';
         THROW; 
         
     END CATCH
@@ -248,12 +160,4 @@ GO
 --EJECUTAR SP
 EXEC sp_ImportarDatosTXT 
     @RutaArchivo = 'D:\Universidad\Materias\Bdd_Aplicada\Archivos\UF por consorcio.txt'
-GO
-
---PARA VER COMO QUEDARON LAS TABLAS
-SELECT * from dbo.unidad_funcional;
-GO
-SELECT * from dbo.consorcio;
-GO
-SELECT * from dbo.Complemento;
 GO
