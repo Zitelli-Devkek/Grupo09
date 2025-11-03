@@ -1,14 +1,14 @@
 /*
 -- =================================================================
 -- Asignatura: Bases de Datos Aplicada
--- ComisiÛn: 01-2900 
+-- Comisi√≥n: 01-2900 
 -- Grupo Nro: 09
 -- Fecha de Entrega:
 --
 -- Enunciado: Creacion de roles
 -- =================================================================
 -- Integrantes:
--- JimÈnez Dami·n (DNI 43.194.984)
+-- Jim√©nez Dami√°n (DNI 43.194.984)
 -- Mendoza Gonzalo (DNI 44.597.456)
 -- Demis Colman (DNI 37.174.947)
 -- Feiertag Mateo (DNI 46.293.138)
@@ -67,25 +67,25 @@ GRANT SELECT ON [dbo].[Proveedor] TO rol_reportes_lectura;
 
 
 
--- ---  ASIGNACION DE PERMISOS ESPECÕFICOS (Matriz) --- 
+-- ---  ASIGNACION DE PERMISOS ESPEC√çFICOS (Matriz) --- 
 
 -- ROL: adminstrativo general
 
-GRANT EXECUTE ON [dbo].[] TO rol_administrativo_general;
-GRANT EXECUTE ON [dbo].[] TO rol_administrativo_general;
+GRANT EXECUTE ON [dbo].[sp_ImportarDatosTXT] TO rol_administrativo_general;
+GRANT EXECUTE ON [dbo].[sp_importar_csv_unidad_funcional] TO rol_administrativo_general;
 GRANT ADD MEMBER ON rol_reportes_lectura TO rol_administrativo_general; -- Hereda permisos de reportes
 GO
 
 -- ROL: Administrativo Bancario
 
-GRANT EXECUTE ON [dbo].[] TO rol_administrativo_bancario;
+GRANT EXECUTE ON [dbo].[sp_importar_csv_cuenta_bancaria] TO rol_administrativo_bancario;
 GRANT ADD MEMBER ON rol_reportes_lectura TO rol_administrativo_bancario; -- Hereda permisos de reportes
 GO
 
 -- ROL: Administrativo operativo
 
-GRANT EXECUTE ON [dbo].[] TO rol_administrativo_operativo;
-GRANT EXECUTE ON [dbo].[] TO rol_administrativo_operativo;
+GRANT EXECUTE ON [dbo].[sp_ImportarDatosTXT] TO rol_administrativo_operativo;
+GRANT EXECUTE ON [dbo].[sp_importar_csv_unidad_funcional] TO rol_administrativo_operativo;
 GRANT ADD MEMBER ON rol_reportes_lectura TO rol_administrativo_operativo; -- Hereda permisos de reportes
 GO
 
@@ -108,4 +108,5 @@ ALTER ROLE rol_administrativo_general ADD MEMBER [usuario_general_1];
 ALTER ROLE rol_administrativo_bancario ADD MEMBER [usuario_bancario_1];
 ALTER ROLE rol_administrativo_operativo ADD MEMBER [usuario_operativo_1];
 ALTER ROLE rol_sistemas ADD MEMBER [usuario_sistemas_1];
+
 */
