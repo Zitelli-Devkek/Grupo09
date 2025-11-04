@@ -5,7 +5,7 @@
 -- Grupo Nro: 09
 -- Fecha de Entrega:
 --
--- Enunciado: Encriptacion
+-- Enunciado: Creacion de Key y cifrado.
 -- =================================================================
 -- Integrantes:
 -- Jiménez Damián (DNI 43.194.984)
@@ -81,5 +81,6 @@ GO
 
 CLOSE SYMMETRIC KEY SK_DatosSensibles;
 GO
+
 
 
