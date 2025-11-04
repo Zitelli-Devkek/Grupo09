@@ -15,7 +15,7 @@ CREACION DE TABLAS NECESARIAS PARA IMPORTAR LOS ARCHIVOS DEL PROYECTO
 */
 
 
-USE AltosSaintJust
+USE Com2900G09
 GO
 
 DROP TABLE IF EXISTS Pago_Importado;
@@ -42,7 +42,8 @@ CREATE TABLE Consorcio (
     direccion VARCHAR(150) NOT NULL,
     admin_nombre VARCHAR(100),
     admin_cuit CHAR(11) NOT NULL UNIQUE,
-    admin_email VARCHAR(100) CHECK (admin_email IS NULL OR admin_email LIKE '%_@_%._%')
+    admin_email VARCHAR(100) CHECK (admin_email IS NULL OR admin_email LIKE '%_@_%._%'),
+    cbu_cvu CHAR(22) NOT NULL
 );
 
 
@@ -82,7 +83,7 @@ CREATE TABLE Persona (
     apellido VARCHAR(100) NOT NULL,
     email_personal VARCHAR(100) CHECK (email_personal IS NULL OR email_personal LIKE '%_@_%._%'),
     telefono VARCHAR(20) NULL,
-    cbu_cvu VARCHAR(22) NOT NULL
+    cbu_cvu CHAR(22) NOT NULL
 );
 
 
@@ -169,8 +170,8 @@ CREATE TABLE Expensa_Detalle (
 
 CREATE TABLE Pago (
     id_pago INT IDENTITY(1,1) PRIMARY KEY,
-    id_uf INT NULL
-        CONSTRAINT FK_Pago_UF FOREIGN KEY REFERENCES Unidad_Funcional(id_uf),
+    id_exp_detalle INT NULL
+        CONSTRAINT FK_exp_detalle FOREIGN KEY REFERENCES Expensa_Detalle(id_exp_detalle),
     fecha DATE NOT NULL,
     medio_pago VARCHAR(50),
     valor DECIMAL(10,2) CHECK (valor > 0),
