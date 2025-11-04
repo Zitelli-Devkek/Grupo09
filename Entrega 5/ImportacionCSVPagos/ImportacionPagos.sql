@@ -19,6 +19,7 @@ BEGIN
         [Valor ] VARCHAR(50) 
     );
 
+    --Aplicar logica de doble lectura BULK por si falla la primera
     -- el intento 1 del bulk es con la Configuración Windows/ANSI (Más probable si falla UTF-8)
     BEGIN TRY
         SET @SQL = N'
