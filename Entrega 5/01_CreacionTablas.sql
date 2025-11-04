@@ -4,7 +4,7 @@ BASE DE DATOS APLICADA
 GRUPO 9
 
 Alumnos:
-JimÈnez Dami·n (DNI 43.194.984)
+Jim√©nez Dami√°n (DNI 43.194.984)
 Mendoza Gonzalo (DNI 44.597.456)
 Demis Colman (DNI 37.174.947)
 Feiertag Mateo (DNI 46.293.138)
@@ -169,7 +169,7 @@ CREATE TABLE Expensa_Detalle (
 
 
 CREATE TABLE Pago (
-    id_pago INT IDENTITY(1,1) PRIMARY KEY,
+    id_pago INT PRIMARY KEY,
     id_exp_detalle INT NULL
         CONSTRAINT FK_exp_detalle FOREIGN KEY REFERENCES Expensa_Detalle(id_exp_detalle),
     fecha DATE NOT NULL,
