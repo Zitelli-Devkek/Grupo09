@@ -17,7 +17,7 @@
 -- =================================================================
 */
 
-USE AltosSaintJust 
+USE Com2900G09 
 GO
 
 CREATE OR ALTER PROCEDURE sp_Reporte5_MayorMorosidad
