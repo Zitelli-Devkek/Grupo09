@@ -97,7 +97,7 @@ GO
 
 -- ---  (En duda) CREACION DE USUARIOS Y ASIGNACION A ROLES ---
 /*
--- Crear usuarios de base de datos (mapeados a Logins de SQL Server)
+-- Crear usuarios de base de datos 
 CREATE USER [usuario_general_1] FOR LOGIN [login_general_1];
 CREATE USER [usuario_bancario_1] FOR LOGIN [login_bancario_1];
 CREATE USER [usuario_operativo_1] FOR LOGIN [login_operativo_1];
@@ -110,5 +110,6 @@ ALTER ROLE rol_administrativo_operativo ADD MEMBER [usuario_operativo_1];
 ALTER ROLE rol_sistemas ADD MEMBER [usuario_sistemas_1];
 
 */
+
 
 
