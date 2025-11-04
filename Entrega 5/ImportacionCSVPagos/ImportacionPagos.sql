@@ -1,6 +1,3 @@
-USE panchito
-GO
-
 CREATE OR ALTER PROCEDURE sp_ImportarPagosCSV
     @RutaArchivo NVARCHAR(MAX)
 AS
@@ -22,7 +19,7 @@ BEGIN
         [Valor ] VARCHAR(50) 
     );
 
-    -- el intento 1 del bulk es con la ConfiguraciÛn Windows/ANSI (M·s probable si falla UTF-8)
+    -- el intento 1 del bulk es con la Configuraci√≥n Windows/ANSI (M√°s probable si falla UTF-8)
     BEGIN TRY
         SET @SQL = N'
         BULK INSERT #TempPagos
@@ -33,7 +30,7 @@ BEGIN
         SELECT @TotalFilasBrutas = COUNT(*) FROM #TempPagos;--cuento las filas para el reporte
     END TRY
     BEGIN CATCH
-        -- Si falla el Intento 1 por permisos o ruta, el error ser· reportado al final.
+        -- Si falla el Intento 1 por permisos o ruta, el error ser√° reportado al final.
         
     END CATCH--el segundo intento se ejecuta si es un error de lectura (del primer bulk)
     
@@ -61,7 +58,7 @@ BEGIN
 
     IF @TotalFilasBrutas = 0--si no se leyeron filas tiro el error de que no se pudieron leer las filas del csv
     BEGIN
-        PRINT 'Error: No se pudieron leer filas del archivo CSV despuÈs de dos intentos.';
+        PRINT 'Error: No se pudieron leer filas del archivo CSV despu√©s de dos intentos.';
         RETURN -1;
     END
     
@@ -71,7 +68,7 @@ BEGIN
     ;WITH DatosLimpios AS (
         SELECT
             TRY_CAST(LTRIM(RTRIM([Id de pago])) AS INT) AS IdPago_limpio,--elimino espacios a los lados y lo guardo como INT con try_cast
-            TRY_CONVERT(DATE, LTRIM(RTRIM([fecha])), 103) AS Fecha_limpio,---- 103 es el cÛdigo de formato para DD/MM/YYYY.
+            TRY_CONVERT(DATE, LTRIM(RTRIM([fecha])), 103) AS Fecha_limpio,---- 103 es el c√≥digo de formato para DD/MM/YYYY.
             REPLACE(LTRIM(RTRIM([CVU/CBU])), ' ', '') AS CBU_limpio,--elimina espacios intermedios y en blanco
             TRY_CAST(REPLACE(REPLACE(LTRIM(RTRIM([Valor ])), '$', ''), '.', '') AS DECIMAL(10,2)) AS Valor_limpio--elimina los signos para juntar todo el dato
         FROM #TempPagos
@@ -85,9 +82,9 @@ BEGIN
             NULL AS id_exp_detalle, --asigno NULL ya que el archivo no lo tiene
             bandera = --genero una bandera para poner las columnas "buenas=0" y las "malas=1"
             CASE
-                WHEN c.IdPago_limpio IS NULL OR c.IdPago_limpio <= 0 THEN 1 --El ID de Pago debe ser un n˙mero entero v·lido y mayor que cero.
+                WHEN c.IdPago_limpio IS NULL OR c.IdPago_limpio <= 0 THEN 1 --El ID de Pago debe ser un n√∫mero entero v√°lido y mayor que cero.
                 WHEN c.Fecha_limpio IS NULL THEN 1 --Que no haya fallado la conversion ed la fecha (fecha_limpio no debe ser NULL).
-                WHEN c.Valor_limpio IS NULL OR c.Valor_limpio <= 0 THEN 1 --El Valor debe ser un n˙mero decimal v·lido y mayor que cero.
+                WHEN c.Valor_limpio IS NULL OR c.Valor_limpio <= 0 THEN 1 --El Valor debe ser un n√∫mero decimal v√°lido y mayor que cero.
                 WHEN c.CBU_limpio IS NULL OR c.CBU_limpio = '' THEN 1 --El CBU/CVU es obligatorio.
                 ELSE 0--si cumple todo, entonces se asigna un 0 a la bandera
             END
@@ -107,7 +104,7 @@ BEGIN
     SELECT @FilasIgnoradas = @TotalFilasBrutas - @TotalFilasTemp;
 
     
-    BEGIN TRANSACTION;-- Se usa transacciÛn para asegurar que Pago y Pago_Importado se inserten juntas
+    BEGIN TRANSACTION;-- Se usa transacci√≥n para asegurar que Pago y Pago_Importado se inserten juntas
     
     BEGIN TRY
         
@@ -136,7 +133,7 @@ BEGIN
     END TRY
     BEGIN CATCH
         IF @@TRANCOUNT > 0 ROLLBACK TRANSACTION;--ROLLBACK si es que hay transacciones ejecutandose
-        PRINT 'Error durante la inserciÛn de datos. Se ejecuta ROLLBACK';
+        PRINT 'Error durante la inserci√≥n de datos. Se ejecuta ROLLBACK';
         SET @FilasInsertadas = 0; --para informar en el reporte
     END CATCH
 
@@ -145,7 +142,7 @@ BEGIN
     PRINT 'Filas totales leidas brutas (VARCHAR): ' + CAST(@TotalFilasBrutas AS VARCHAR(10));
     PRINT 'Filas insertadas exitosamente en Pago y Pago_Importado: ' + CAST(@FilasInsertadas AS VARCHAR(10));
     PRINT 'Filas ignoradas (Id de Pago Duplicado): ' + CAST(@FilasIgnoradas_Duplicados AS VARCHAR(10));
-    PRINT 'Filas ignoradas (Datos inv·lidos o espacios vacios): ' + CAST(@FilasIgnoradas AS VARCHAR(10));
+    PRINT 'Filas ignoradas (Datos inv√°lidos o espacios vacios): ' + CAST(@FilasIgnoradas AS VARCHAR(10));
 
     --LIMPIEZA DE TABLAS TEMPORALES
     IF OBJECT_ID('tempdb..#TempPagos') IS NOT NULL DROP TABLE #TempPagos;
