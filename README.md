@@ -1,1 +1,1 @@
-"# Bases-de-Datos-Aplicadas---Grupo-9".
+"# Bases-de-Datos-Aplicadas---Grupo-9"
