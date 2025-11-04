@@ -12,8 +12,7 @@ Suriano Lautaro (DNI 44.792.129)
 Zitelli Emanuel (DNI 45.064.107)
 
 
-Genere índices para optimizar la ejecución de las consultas de los reportes. Debe existir un
-script adicional con la generación de índices.*/
+Creación de API*/
 
 EXEC sp_configure 'show advanced options', 1;
 RECONFIGURE;

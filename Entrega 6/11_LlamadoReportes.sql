@@ -12,8 +12,7 @@ Suriano Lautaro (DNI 44.792.129)
 Zitelli Emanuel (DNI 45.064.107)
 
 
-Genere índices para optimizar la ejecución de las consultas de los reportes. Debe existir un
-script adicional con la generación de índices.*/
+Llamados a los reportes*/
 
 EXEC sp_Reporte1_FlujoSemanal '2020-01-01', '2025-12-31', 1;
 EXEC sp_Reporte2_RecaudacionMensual 2024, 1, 8;

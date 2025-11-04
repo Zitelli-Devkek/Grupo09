@@ -12,8 +12,9 @@ Suriano Lautaro (DNI 44.792.129)
 Zitelli Emanuel (DNI 45.064.107)
 
 
-Genere índices para optimizar la ejecución de las consultas de los reportes. Debe existir un
-script adicional con la generación de índices.*/
+Reporte 3
+Presente un cuadro cruzado con la recaudación total desagregada según su procedencia
+(ordinario, extraordinario, etc.) según el periodo.*/
 
 CREATE OR ALTER PROCEDURE sp_Reporte3_RecaudacionPorTipo
     @Anio INT,

@@ -12,8 +12,8 @@ Suriano Lautaro (DNI 44.792.129)
 Zitelli Emanuel (DNI 45.064.107)
 
 
-Genere índices para optimizar la ejecución de las consultas de los reportes. Debe existir un
-script adicional con la generación de índices.*/
+Reporte 4
+Obtenga los 5 (cinco) meses de mayores gastos y los 5 (cinco) de mayores ingresos. */
 
 CREATE OR ALTER PROCEDURE sp_Reporte4_MayoresGastosIngresos
     @Anio INT,

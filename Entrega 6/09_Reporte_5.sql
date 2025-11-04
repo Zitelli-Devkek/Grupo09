@@ -12,8 +12,10 @@ Suriano Lautaro (DNI 44.792.129)
 Zitelli Emanuel (DNI 45.064.107)
 
 
-Genere índices para optimizar la ejecución de las consultas de los reportes. Debe existir un
-script adicional con la generación de índices.*/
+Reporte 5
+Obtenga los 3 (tres) propietarios con mayor morosidad. Presente información de contacto y
+DNI de los propietarios para que la administración los pueda contactar o remitir el trámite al
+estudio jurídico.*/
 
 CREATE OR ALTER PROCEDURE sp_Reporte5_MayorMorosidad
     @Anio INT,

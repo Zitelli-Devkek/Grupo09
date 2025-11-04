@@ -12,8 +12,10 @@ Suriano Lautaro (DNI 44.792.129)
 Zitelli Emanuel (DNI 45.064.107)
 
 
-Genere índices para optimizar la ejecución de las consultas de los reportes. Debe existir un
-script adicional con la generación de índices.*/
+Reporte 1
+Se desea analizar el flujo de caja en forma semanal. Debe presentar la recaudación por
+pagos ordinarios y extraordinarios de cada semana, el promedio en el periodo, y el
+acumulado progresivo.*/
 
 CREATE OR ALTER PROCEDURE sp_Reporte1_FlujoSemanal
     @fecha_inicio DATE,

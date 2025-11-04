@@ -12,8 +12,9 @@ Suriano Lautaro (DNI 44.792.129)
 Zitelli Emanuel (DNI 45.064.107)
 
 
-Genere índices para optimizar la ejecución de las consultas de los reportes. Debe existir un
-script adicional con la generación de índices.*/
+Reporte 6
+Muestre las fechas de pagos de expensas ordinarias de cada UF y la cantidad de días que
+pasan entre un pago y el siguiente, para el conjunto examinado.*/
 
 CREATE OR ALTER PROCEDURE sp_Reporte6_DiasEntrePagos_XML
     @IdConsorcio INT = NULL,
