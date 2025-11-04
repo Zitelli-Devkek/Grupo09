@@ -25,7 +25,7 @@ BEGIN
         SET @SQL = N'
         BULK INSERT #TempPagos
         FROM ''' + @RutaArchivo + N'''
-        WITH (FIELDTERMINATOR = '','', ROWTERMINATOR = ''0x0d0a'', FIRSTROW = 2, CODEPAGE = ''1252'');';
+        WITH (FIELDTERMINATOR = '','', ROWTERMINATOR = ''0x0d0a'', FIRSTROW = 2, CODEPAGE = ''1252'');';--0x0d0a es para decirle que el archivo se hizo en el formato de windows
         
         EXEC sp_executesql @SQL;
         SELECT @TotalFilasBrutas = COUNT(*) FROM #TempPagos;--cuento las filas para el reporte
