@@ -1,7 +1,41 @@
+/*
+BASE DE DATOS APLICADA
+
+GRUPO 9
+
+Alumnos:
+Jiménez Damián (DNI 43.194.984)
+Mendoza Gonzalo (DNI 44.597.456)
+Demis Colman (DNI 37.174.947)
+Feiertag Mateo (DNI 46.293.138)
+Suriano Lautaro (DNI 44.792.129)
+Zitelli Emanuel (DNI 45.064.107)
+
+CREACION DE TABLAS NECESARIAS PARA IMPORTAR LOS ARCHIVOS DEL PROYECTO
+*/
+
+
 USE AltosSaintJust
 GO
 
+DROP TABLE IF EXISTS Pago_Importado;
+DROP TABLE IF EXISTS Pago;
+DROP TABLE IF EXISTS Expensa_Detalle;
+DROP TABLE IF EXISTS Gasto_Extraordinario;
+DROP TABLE IF EXISTS Gasto_Ordinario;
+DROP TABLE IF EXISTS Expensa;
+DROP TABLE IF EXISTS Persona_UF;
+DROP TABLE IF EXISTS Complemento;
+DROP TABLE IF EXISTS Persona;
+DROP TABLE IF EXISTS Tipo_Ocupante;
+DROP TABLE IF EXISTS Unidad_Funcional;
+DROP TABLE IF EXISTS Proveedor;
+DROP TABLE IF EXISTS Servicio;
 DROP TABLE IF EXISTS Consorcio;
+
+
+
+
 CREATE TABLE Consorcio (
     id_consorcio INT IDENTITY(1,1) PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
@@ -12,8 +46,8 @@ CREATE TABLE Consorcio (
 );
 
 
-DROP TABLE IF EXISTS Unidad_Funcional;
-CREATE TABLE Unidad_Funcional (
+
+CREATE TABLE Unidad_Funcional ( 
     id_uf INT IDENTITY(1,1) PRIMARY KEY,
     id_consorcio INT NOT NULL
         CONSTRAINT FK_UF_Consorcio FOREIGN KEY REFERENCES Consorcio(id_consorcio),
@@ -24,7 +58,7 @@ CREATE TABLE Unidad_Funcional (
     m2 DECIMAL(10,2) CHECK (m2 > 0)
 );
 
-DROP TABLE IF EXISTS Complemento;
+
 CREATE TABLE Complemento (
     id_complemento INT IDENTITY(1,1) PRIMARY KEY,
     id_uf INT NOT NULL
@@ -33,13 +67,13 @@ CREATE TABLE Complemento (
     tipo_complemento VARCHAR(50) CHECK (tipo_complemento IN ('Baulera', 'Cochera'))
 );
 
-DROP TABLE IF EXISTS Tipo_Ocupante;
+
 CREATE TABLE Tipo_Ocupante (
     id_tipo_ocupante INT IDENTITY(1,1) PRIMARY KEY,
     descripcion VARCHAR(50) NOT NULL
 );
 
-DROP TABLE IF EXISTS Persona;
+
 CREATE TABLE Persona (
     DNI CHAR(8) PRIMARY KEY CHECK (DNI BETWEEN 10000000 AND 99999999),
     id_tipo_ocupante INT NOT NULL
@@ -51,7 +85,7 @@ CREATE TABLE Persona (
     cbu_cvu VARCHAR(22) NOT NULL
 );
 
-DROP TABLE IF EXISTS Persona_UF;
+
 CREATE TABLE Persona_UF (
     id_persona_uf INT IDENTITY(1,1) PRIMARY KEY,
     DNI CHAR(8) NOT NULL
@@ -62,7 +96,7 @@ CREATE TABLE Persona_UF (
     fecha_fin DATE NULL
 );
 
-DROP TABLE IF EXISTS Servicio;
+
 CREATE TABLE Servicio (
     id_servicio INT IDENTITY(1,1) PRIMARY KEY,
     nro_cuenta VARCHAR(30),
@@ -71,7 +105,7 @@ CREATE TABLE Servicio (
     valor DECIMAL (10,2) 
 );
 
-DROP TABLE IF EXISTS Proveedor;
+
 CREATE TABLE Proveedor (
     id_proveedor INT IDENTITY(1,1) PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
@@ -82,7 +116,7 @@ CREATE TABLE Proveedor (
     telefono VARCHAR(20)
 );
 
-DROP TABLE IF EXISTS Expensa;
+
 CREATE TABLE Expensa (
     id_expensa INT IDENTITY(1,1) PRIMARY KEY,
     id_uf INT NOT NULL
@@ -92,7 +126,7 @@ CREATE TABLE Expensa (
     valor DECIMAL(10,2) CHECK (valor >= 0),
 );
 
-DROP TABLE IF EXISTS Gasto_Ordinario;
+
 CREATE TABLE Gasto_Ordinario (
     id_gasto_ord INT IDENTITY(1,1) PRIMARY KEY,
     id_expensa INT NOT NULL
@@ -107,7 +141,7 @@ CREATE TABLE Gasto_Ordinario (
     importe DECIMAL(10,2) CHECK (importe >= 0)
 );
 
-DROP TABLE IF EXISTS Gasto_Extraordinario;
+
 CREATE TABLE Gasto_Extraordinario (
     id_gasto_ext INT IDENTITY(1,1) PRIMARY KEY,
     id_expensa INT NOT NULL
@@ -115,13 +149,13 @@ CREATE TABLE Gasto_Extraordinario (
     id_proveedor INT NULL
         CONSTRAINT FK_GExt_Prov FOREIGN KEY REFERENCES Proveedor(id_proveedor),
     total_cuotas INT DEFAULT 1,
-    nro_cuota INT DEFAULT 1 CHECK (nro_cuota <= total_cuotas),
+    nro_cuota INT DEFAULT 1,
     detalle VARCHAR(150),
     importe DECIMAL(10,2) CHECK (importe >= 0),
 
 );
 
-DROP TABLE IF EXISTS Expensa_Detalle;
+
 CREATE TABLE Expensa_Detalle (
     id_exp_detalle INT IDENTITY(1,1) PRIMARY KEY,
     id_expensa INT NOT NULL
@@ -132,7 +166,7 @@ CREATE TABLE Expensa_Detalle (
     estado VARCHAR(20) CHECK (estado IN ('Pendiente','Pagado','Vencido')),
 );
 
-DROP TABLE IF EXISTS Pago;
+
 CREATE TABLE Pago (
     id_pago INT IDENTITY(1,1) PRIMARY KEY,
     id_uf INT NULL
@@ -143,7 +177,7 @@ CREATE TABLE Pago (
    
 );
 
-DROP TABLE IF EXISTS Pago_Importado;
+
 CREATE TABLE Pago_Importado (
     id_pago_imp INT IDENTITY(1,1) PRIMARY KEY,
     id_pago INT NOT NULL,
