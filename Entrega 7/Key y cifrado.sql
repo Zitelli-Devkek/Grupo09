@@ -68,8 +68,8 @@ GO
 
 ALTER TABLE Persona DROP COLUMN DNI;
 ALTER TABLE Persona DROP COLUMN email_personal;
-ALTER TABLE Persona DROP COLUMN Telefono;
-ALTER TABLE Persona DROP COLUMN CVU_CBU;
+ALTER TABLE Persona DROP COLUMN telefono;
+ALTER TABLE Persona DROP COLUMN cbu_cvu;
 GO
 
 
@@ -81,4 +81,5 @@ GO
 
 CLOSE SYMMETRIC KEY SK_DatosSensibles;
 GO
+
 
