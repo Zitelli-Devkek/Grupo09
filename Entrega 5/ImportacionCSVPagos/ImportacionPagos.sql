@@ -9,7 +9,7 @@ BEGIN
     DECLARE @TotalFilasBrutas INT = 0;
     DECLARE @FilasInsertadas INT = 0;
     DECLARE @FilasIgnoradas_Duplicados INT = 0;
-    DECLARE @FilasIgnoradas_DatosMalos INT = 0;
+    DECLARE @FilasIgnoradas INT = 0;
     
     
     CREATE TABLE #TempPagos (--Creo tabla temporal para la lectura de los datos como VARCHAR
