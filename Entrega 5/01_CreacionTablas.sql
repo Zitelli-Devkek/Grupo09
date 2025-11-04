@@ -1,6 +1,21 @@
 USE AltosSaintJust
 GO
 
+DROP TABLE IF EXISTS Pago_Importado;
+DROP TABLE IF EXISTS Pago;
+DROP TABLE IF EXISTS Expensa_Detalle;
+DROP TABLE IF EXISTS Gasto_Extraordinario;
+DROP TABLE IF EXISTS Gasto_Ordinario;
+DROP TABLE IF EXISTS Expensa;
+DROP TABLE IF EXISTS Proveedor;
+DROP TABLE IF EXISTS Servicio;
+DROP TABLE IF EXISTS Persona_UF;
+DROP TABLE IF EXISTS Persona;
+DROP TABLE IF EXISTS Tipo_Ocupante;
+DROP TABLE IF EXISTS Complemento;
+DROP TABLE IF EXISTS Unidad_Funcional;
+DROP TABLE IF EXISTS Consorcio;
+
 DROP TABLE IF EXISTS Consorcio;
 CREATE TABLE Consorcio (
     id_consorcio INT IDENTITY(1,1) PRIMARY KEY,
@@ -68,7 +83,7 @@ CREATE TABLE Servicio (
     nro_cuenta VARCHAR(30),
     mes TINYINT NOT NULL CHECK (mes BETWEEN 1 AND 12),
     categoria VARCHAR(50),
-    valor DECIMAL (10,2) 
+    valor DECIMAL (10,2) NOT NULL 
 );
 
 DROP TABLE IF EXISTS Proveedor;
@@ -115,7 +130,7 @@ CREATE TABLE Gasto_Extraordinario (
     id_proveedor INT NULL
         CONSTRAINT FK_GExt_Prov FOREIGN KEY REFERENCES Proveedor(id_proveedor),
     total_cuotas INT DEFAULT 1,
-    nro_cuota INT DEFAULT 1 CHECK (nro_cuota <= total_cuotas),
+    nro_cuota INT DEFAULT 1,
     detalle VARCHAR(150),
     importe DECIMAL(10,2) CHECK (importe >= 0),
 
@@ -152,4 +167,3 @@ CREATE TABLE Pago_Importado (
     CONSTRAINT FK_PagoImportado_Pago FOREIGN KEY (id_pago) REFERENCES Pago(id_pago),
     CONSTRAINT UQ_PagoImportado_id_pago UNIQUE (id_pago)
 );
-
