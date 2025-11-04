@@ -17,7 +17,7 @@
 -- =================================================================
 */
 
-USE AltosSaintJust
+USE Com2900G09
 GO
 
 -- --- CREACION ROLES ---
@@ -110,4 +110,5 @@ ALTER ROLE rol_administrativo_operativo ADD MEMBER [usuario_operativo_1];
 ALTER ROLE rol_sistemas ADD MEMBER [usuario_sistemas_1];
 
 */
+
 
