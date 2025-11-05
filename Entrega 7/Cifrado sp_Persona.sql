@@ -17,7 +17,7 @@
 -- =================================================================
 */
 
-CREATE OR ALTER PROCEDURE sp_importar_csv_persona
+CREATE OR ALTER PROCEDURE sp_importar_csv_inquilino_propietarios_datos
 AS
 BEGIN
     SET NOCOUNT ON;
