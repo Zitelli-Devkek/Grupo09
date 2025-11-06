@@ -113,7 +113,7 @@ CREATE TABLE Expensa (
     importe_total DECIMAL(10,2) CHECK (importe_total >= 0),
 );
 
-CREATE TABLE Factura(
+CREATE TABLE Factura (
     nro_factura INT IDENTITY(1,1) PRIMARY KEY,
     id_servicio INT NOT NULL
         CONSTRAINT FK_Servicio FOREIGN KEY REFERENCES Servicio(id_servicio),
