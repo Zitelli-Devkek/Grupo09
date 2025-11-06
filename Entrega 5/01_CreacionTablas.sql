@@ -1,20 +1,3 @@
-/*
-BASE DE DATOS APLICADA
-
-GRUPO 9
-
-Alumnos:
-Jiménez Damián (DNI 43.194.984)
-Mendoza Gonzalo (DNI 44.597.456)
-Demis Colman (DNI 37.174.947)
-Feiertag Mateo (DNI 46.293.138)
-Suriano Lautaro (DNI 44.792.129)
-Zitelli Emanuel (DNI 45.064.107)
-
-CREACION DE TABLAS NECESARIAS PARA IMPORTAR LOS ARCHIVOS DEL PROYECTO
-*/
-
-
 USE Com2900G09
 GO
 
@@ -108,7 +91,7 @@ CREATE TABLE Servicio (
 CREATE TABLE Expensa (
     id_expensa INT IDENTITY(1,1) PRIMARY KEY,
     id_consorcio INT NOT NULL
-        CONSTRAINT FK_UF_Consorcio FOREIGN KEY REFERENCES Consorcio(id_consorcio),
+        CONSTRAINT FK_UF_Consorcio2 FOREIGN KEY REFERENCES Consorcio(id_consorcio),
     mes CHAR(7) NOT NULL,
     importe_total DECIMAL(10,2) CHECK (importe_total >= 0),
 );
@@ -129,7 +112,7 @@ CREATE TABLE Factura (
 CREATE TABLE Expensa_Detalle (
     id_exp_detalle INT IDENTITY(1,1) PRIMARY KEY,
     id_expensa INT NOT NULL
-         CONSTRAINT FK_ED_Exp FOREIGN KEY REFERENCES Expensa(id_expensa),
+         CONSTRAINT FK_ED_Exp2 FOREIGN KEY REFERENCES Expensa(id_expensa),
     nro_cuota INT DEFAULT 1,
     total_cuotas INT DEFAULT 1,
     descripcion VARCHAR(50),
@@ -148,4 +131,3 @@ CREATE TABLE Pago (
     valor DECIMAL(10,2) CHECK (valor > 0),
    
 );
-
