@@ -18,20 +18,18 @@ CREACION DE TABLAS NECESARIAS PARA IMPORTAR LOS ARCHIVOS DEL PROYECTO
 USE Com2900G09
 GO
 
-DROP TABLE IF EXISTS Pago_Importado;
 DROP TABLE IF EXISTS Pago;
 DROP TABLE IF EXISTS Expensa_Detalle;
-DROP TABLE IF EXISTS Gasto_Extraordinario;
-DROP TABLE IF EXISTS Gasto_Ordinario;
 DROP TABLE IF EXISTS Expensa;
+DROP TABLE IF EXISTS Factura;
 DROP TABLE IF EXISTS Persona_UF;
 DROP TABLE IF EXISTS Complemento;
 DROP TABLE IF EXISTS Persona;
 DROP TABLE IF EXISTS Tipo_Ocupante;
 DROP TABLE IF EXISTS Unidad_Funcional;
-DROP TABLE IF EXISTS Proveedor;
 DROP TABLE IF EXISTS Servicio;
 DROP TABLE IF EXISTS Consorcio;
+
 
 
 
@@ -55,8 +53,8 @@ CREATE TABLE Unidad_Funcional (
     nr_uf INT NOT NULL CHECK (nr_uf > 0),
     piso VARCHAR(10),
     departamento VARCHAR(10),
-    coeficiente DECIMAL(6,3) CHECK (coeficiente >= 0 AND coeficiente <= 1),
-    m2 DECIMAL(10,2) CHECK (m2 > 0)
+    coeficiente DECIMAL(4,2),
+    m2 DECIMAL(4,2) CHECK (m2 > 0)
 );
 
 
@@ -64,7 +62,7 @@ CREATE TABLE Complemento (
     id_complemento INT IDENTITY(1,1) PRIMARY KEY,
     id_uf INT NOT NULL
         CONSTRAINT FK_Complemento_UF FOREIGN KEY REFERENCES Unidad_Funcional(id_uf),
-    m2 DECIMAL(10,2) CHECK (m2 > 0),
+    m2 DECIMAL(4,2) CHECK (m2 > 0),
     tipo_complemento VARCHAR(50) CHECK (tipo_complemento IN ('Baulera', 'Cochera'))
 );
 
@@ -107,53 +105,24 @@ CREATE TABLE Servicio (
 );
 
 
-CREATE TABLE Proveedor (
-    id_proveedor INT IDENTITY(1,1) PRIMARY KEY,
-    nombre VARCHAR(100) NOT NULL,
-    nro_cuenta VARCHAR(30),
-    descripcion VARCHAR(150),
-    cuit CHAR(11) NOT NULL UNIQUE,
-    email VARCHAR(100)  CHECK (email IS NULL OR email LIKE '%_@_%._%'),
-    telefono VARCHAR(20)
-);
-
-
 CREATE TABLE Expensa (
     id_expensa INT IDENTITY(1,1) PRIMARY KEY,
-    id_uf INT NOT NULL
-         CONSTRAINT FK_Expensa_UF FOREIGN KEY REFERENCES Unidad_Funcional(id_uf),
+    id_consorcio INT NOT NULL
+        CONSTRAINT FK_UF_Consorcio FOREIGN KEY REFERENCES Consorcio(id_consorcio),
     mes CHAR(7) NOT NULL,
-    vencimiento DATE NOT NULL,
-    valor DECIMAL(10,2) CHECK (valor >= 0),
+    importe_total DECIMAL(10,2) CHECK (importe_total >= 0),
 );
 
-
-CREATE TABLE Gasto_Ordinario (
-    id_gasto_ord INT IDENTITY(1,1) PRIMARY KEY,
+CREATE TABLE Factura(
+    nro_factura INT IDENTITY(1,1) PRIMARY KEY,
+    id_servicio INT NOT NULL
+        CONSTRAINT FK_Servicio FOREIGN KEY REFERENCES Servicio(id_servicio),
     id_expensa INT NOT NULL
-        CONSTRAINT FK_GOrd_Exp FOREIGN KEY REFERENCES Expensa(id_expensa),
-    id_proveedor INT
-        CONSTRAINT FK_GOrd_Prov FOREIGN KEY REFERENCES Proveedor(id_proveedor),
-    id_servicio INT
-        CONSTRAINT FK_GOrd_Serv FOREIGN KEY REFERENCES Servicio(id_servicio),
-    periodo CHAR(7),
-    nro_factura VARCHAR(30),
-    detalle VARCHAR(150),
-    importe DECIMAL(10,2) CHECK (importe >= 0)
-);
-
-
-CREATE TABLE Gasto_Extraordinario (
-    id_gasto_ext INT IDENTITY(1,1) PRIMARY KEY,
-    id_expensa INT NOT NULL
-         CONSTRAINT FK_GExt_Exp FOREIGN KEY REFERENCES Expensa(id_expensa),
-    id_proveedor INT NULL
-        CONSTRAINT FK_GExt_Prov FOREIGN KEY REFERENCES Proveedor(id_proveedor),
-    total_cuotas INT DEFAULT 1,
-    nro_cuota INT DEFAULT 1,
-    detalle VARCHAR(150),
-    importe DECIMAL(10,2) CHECK (importe >= 0),
-
+         CONSTRAINT FK_ED_Exp FOREIGN KEY REFERENCES Expensa(id_expensa),
+    fecha_emision DATE,
+    fecha_vencimiento DATE,
+    importe DECIMAL(10,2),
+    detalle VARCHAR(50)
 );
 
 
@@ -161,7 +130,9 @@ CREATE TABLE Expensa_Detalle (
     id_exp_detalle INT IDENTITY(1,1) PRIMARY KEY,
     id_expensa INT NOT NULL
          CONSTRAINT FK_ED_Exp FOREIGN KEY REFERENCES Expensa(id_expensa),
-    tipo_gasto VARCHAR(50) CHECK (tipo_gasto IN ('Ordinario','Extraordinario')),
+    nro_cuota INT DEFAULT 1,
+    total_cuotas INT DEFAULT 1,
+    descripcion VARCHAR(50),
     fecha_venc DATE,
     importe_uf DECIMAL(10,2) CHECK (importe_uf >= 0),
     estado VARCHAR(20) CHECK (estado IN ('Pendiente','Pagado','Vencido')),
@@ -176,15 +147,5 @@ CREATE TABLE Pago (
     medio_pago VARCHAR(50),
     valor DECIMAL(10,2) CHECK (valor > 0),
    
-);
-
-
-CREATE TABLE Pago_Importado (
-    id_pago_imp INT IDENTITY(1,1) PRIMARY KEY,
-    id_pago INT NOT NULL,
-    fecha_importacion DATE NOT NULL,
-    cuenta_origen VARCHAR(22),
-    CONSTRAINT FK_PagoImportado_Pago FOREIGN KEY (id_pago) REFERENCES Pago(id_pago),
-    CONSTRAINT UQ_PagoImportado_id_pago UNIQUE (id_pago)
 );
 
