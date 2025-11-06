@@ -14,14 +14,11 @@ DROP TABLE IF EXISTS Servicio;
 DROP TABLE IF EXISTS Consorcio;
 
 
-
-
-
 CREATE TABLE Consorcio (
     id_consorcio INT IDENTITY(1,1) PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
     direccion VARCHAR(150) NOT NULL,
-    admin_nombre VARCHAR(100),
+    admin_nombre VARCHAR(100) NOT NULL,
     admin_cuit CHAR(11) NOT NULL UNIQUE,
     admin_email VARCHAR(100) CHECK (admin_email IS NULL OR admin_email LIKE '%_@_%._%'),
     cbu_cvu CHAR(22) NOT NULL
@@ -36,8 +33,8 @@ CREATE TABLE Unidad_Funcional (
     nr_uf INT NOT NULL CHECK (nr_uf > 0),
     piso VARCHAR(10),
     departamento VARCHAR(10),
-    coeficiente DECIMAL(4,2),
-    m2 DECIMAL(4,2) CHECK (m2 > 0)
+    coeficiente DECIMAL(4,2) NOT NULL,
+    m2 DECIMAL(4,2) NOT NULL CHECK (m2 > 0)
 );
 
 
@@ -45,8 +42,8 @@ CREATE TABLE Complemento (
     id_complemento INT IDENTITY(1,1) PRIMARY KEY,
     id_uf INT NOT NULL
         CONSTRAINT FK_Complemento_UF FOREIGN KEY REFERENCES Unidad_Funcional(id_uf),
-    m2 DECIMAL(4,2) CHECK (m2 > 0),
-    tipo_complemento VARCHAR(50) CHECK (tipo_complemento IN ('Baulera', 'Cochera'))
+    m2 DECIMAL(4,2) NOT NULL CHECK (m2 > 0),
+    tipo_complemento VARCHAR(50) NOT NULL CHECK (tipo_complemento IN ('Baulera', 'Cochera'))
 );
 
 
@@ -81,10 +78,10 @@ CREATE TABLE Persona_UF (
 
 CREATE TABLE Servicio (
     id_servicio INT IDENTITY(1,1) PRIMARY KEY,
-    nro_cuenta VARCHAR(30),
+    nro_cuenta VARCHAR(30) NOT NULL,
     mes TINYINT NOT NULL CHECK (mes BETWEEN 1 AND 12),
-    categoria VARCHAR(50),
-    valor DECIMAL (10,2) 
+    categoria VARCHAR(50) NOT NULL,
+    valor DECIMAL (10,2) NOT NULL CHECK (valor >= 0)
 );
 
 
@@ -93,7 +90,7 @@ CREATE TABLE Expensa (
     id_consorcio INT NOT NULL
         CONSTRAINT FK_UF_Consorcio2 FOREIGN KEY REFERENCES Consorcio(id_consorcio),
     mes CHAR(7) NOT NULL,
-    importe_total DECIMAL(10,2) CHECK (importe_total >= 0),
+    importe_total DECIMAL(10,2) NOT NULL CHECK (importe_total >= 0),
 );
 
 CREATE TABLE Factura (
@@ -102,9 +99,9 @@ CREATE TABLE Factura (
         CONSTRAINT FK_Servicio FOREIGN KEY REFERENCES Servicio(id_servicio),
     id_expensa INT NOT NULL
          CONSTRAINT FK_ED_Exp FOREIGN KEY REFERENCES Expensa(id_expensa),
-    fecha_emision DATE,
-    fecha_vencimiento DATE,
-    importe DECIMAL(10,2),
+    fecha_emision DATE NOT NULL,
+    fecha_vencimiento DATE NOT NULL,
+    importe DECIMAL(10,2) NOT NULL,
     detalle VARCHAR(50)
 );
 
@@ -113,8 +110,8 @@ CREATE TABLE Expensa_Detalle (
     id_exp_detalle INT IDENTITY(1,1) PRIMARY KEY,
     id_expensa INT NOT NULL
          CONSTRAINT FK_ED_Exp2 FOREIGN KEY REFERENCES Expensa(id_expensa),
-    nro_cuota INT DEFAULT 1,
-    total_cuotas INT DEFAULT 1,
+    nro_cuota INT NOT NULL DEFAULT 1,
+    total_cuotas INT NOT NULL DEFAULT 1,
     descripcion VARCHAR(50),
     fecha_venc DATE,
     importe_uf DECIMAL(10,2) CHECK (importe_uf >= 0),
@@ -127,7 +124,7 @@ CREATE TABLE Pago (
     id_exp_detalle INT NULL
         CONSTRAINT FK_exp_detalle FOREIGN KEY REFERENCES Expensa_Detalle(id_exp_detalle),
     fecha DATE NOT NULL,
-    medio_pago VARCHAR(50),
-    valor DECIMAL(10,2) CHECK (valor > 0),
+    medio_pago VARCHAR(50) NOT NULL,
+    valor DECIMAL(10,2) NOT NULL CHECK (valor > 0),
    
 );
