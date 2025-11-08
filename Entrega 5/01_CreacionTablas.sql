@@ -17,13 +17,10 @@ DROP TABLE IF EXISTS Consorcio;
 CREATE TABLE Consorcio (
     id_consorcio INT IDENTITY(1,1) PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
-    direccion VARCHAR(150) NOT NULL,
-    admin_nombre VARCHAR(100) NOT NULL,
-    admin_cuit CHAR(11) NOT NULL UNIQUE,
-    admin_email VARCHAR(100) CHECK (admin_email IS NULL OR admin_email LIKE '%_@_%._%'),
+    cuit CHAR(11) NOT NULL UNIQUE,
+    email VARCHAR(100) CHECK (email IS NULL OR email LIKE '%_@_%._%'),
     cbu_cvu CHAR(22) NOT NULL
 );
-
 
 
 CREATE TABLE Unidad_Funcional ( 
