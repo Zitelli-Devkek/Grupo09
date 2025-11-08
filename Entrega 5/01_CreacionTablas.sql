@@ -18,7 +18,6 @@ CREATE TABLE Consorcio (
     id_consorcio INT IDENTITY(1,1) PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
     cuit CHAR(11) NOT NULL UNIQUE,
-    email VARCHAR(100) CHECK (email IS NULL OR email LIKE '%_@_%._%'),
     cbu_cvu CHAR(22) NOT NULL
 );
 
