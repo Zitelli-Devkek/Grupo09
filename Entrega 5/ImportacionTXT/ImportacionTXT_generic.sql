@@ -1,8 +1,24 @@
+/*
+BASE DE DATOS APLICADA
+
+GRUPO 9
+
+Alumnos:
+Jiménez Damián (DNI 43.194.984)
+Mendoza Gonzalo (DNI 44.597.456)
+Demis Colman (DNI 37.174.947)
+Feiertag Mateo (DNI 46.293.138)
+Suriano Lautaro (DNI 44.792.129)
+Zitelli Emanuel (DNI 45.064.107)
+
+SP para importar el archivo "UF por consorcio.txt"
+*/
+
 USE Com2900G09
 GO
 
 
-CREATE OR ALTER PROCEDURE sp_ImportarUF_PorConsorcio
+CREATE OR ALTER PROCEDURE sp_Importar_UF_Por_Consorcio
     @RutaArchivo NVARCHAR(500)
 AS
 BEGIN
@@ -15,7 +31,7 @@ BEGIN
         IF OBJECT_ID('tempdb..#UF_Temp') IS NOT NULL--si ya existe una tabla temporal con ese nombre la borra para poder crearla sin problemas
             DROP TABLE #UF_Temp;
 
-        CREATE TABLE #UF_Temp (
+        CREATE TABLE #UF_Temp (--creacion de tabla temporal todos como varchar para evitar errores de formato
             NombreConsorcio      VARCHAR(100),
             nroUnidadFuncional   VARCHAR(10),
             Piso                 VARCHAR(10),
@@ -58,6 +74,7 @@ BEGIN
             'Sin dirección',
             RIGHT('00000000000' + CAST(CAST(RAND() * 10000000000 + ROW_NUMBER() OVER (ORDER BY t.NombreConsorcio) AS BIGINT) AS VARCHAR(11)), 11),
             RIGHT('0000000000000000000000' + CAST(CAST(RAND() * 1000000000000000 + ROW_NUMBER() OVER (ORDER BY t.NombreConsorcio) AS BIGINT) AS VARCHAR(22)), 22)
+            -- las 2 funciones de arriba las uso para generar un cuit aleatorio que siempre sea distinto ya que le sumo el ROW_NUMBER
         FROM #UF_Temp t
         WHERE NOT EXISTS (
             SELECT 1 FROM Consorcio c WHERE c.nombre = t.NombreConsorcio
