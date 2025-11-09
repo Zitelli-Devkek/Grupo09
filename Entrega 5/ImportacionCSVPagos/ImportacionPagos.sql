@@ -64,6 +64,7 @@ BEGIN
 
         COMMIT TRANSACTION;
         PRINT 'Importación finalizada correctamente.';
+        PRINT 'Importación a Pagos completada.';
 
     END TRY
     BEGIN CATCH
