@@ -14,6 +14,9 @@ Zitelli Emanuel (DNI 45.064.107)
 
 Creación de API*/
 
+USE Com2900G09
+GO
+
 EXEC sp_configure 'show advanced options', 1;
 RECONFIGURE;
 EXEC sp_configure 'Ole Automation Procedures', 1;

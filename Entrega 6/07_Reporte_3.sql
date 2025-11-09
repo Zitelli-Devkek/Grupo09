@@ -16,52 +16,74 @@ Reporte 3
 Presente un cuadro cruzado con la recaudación total desagregada según su procedencia
 (ordinario, extraordinario, etc.) según el periodo.*/
 
-CREATE OR ALTER PROCEDURE sp_Reporte3_RecaudacionPorTipo
-    @Anio INT,
-    @IdConsorcio INT = NULL,
-    @MesInicio INT = 1,
-    @tipo_dolar NVARCHAR(50) = 'Blue'
+USE Com2900G09
+GO
+
+CREATE OR ALTER PROCEDURE dbo.sp_Report_RecaudacionPorProcedencia
+    @id_consorcio INT,
+    @fecha_inicio DATE,
+    @fecha_fin DATE
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    DECLARE @valor_dolar DECIMAL(10,2);
+    DECLARE @venta DECIMAL(18,6) = NULL;
+    SELECT TOP 1 @venta = venta FROM ##DolarHistorico WHERE venta IS NOT NULL ORDER BY fecha DESC;
+    IF @venta IS NULL SET @venta = 1;
 
-    -- Tomamos el valor más reciente del tipo de dólar seleccionado
-    SELECT TOP 1 @valor_dolar = venta
-    FROM ##DolarHistorico
-    WHERE tipo = @tipo_dolar
-    ORDER BY fecha DESC;
+    ;WITH pagos_origen AS (
+        SELECT
+            FORMAT(p.fecha,'yyyy-MM') AS periodo,
+            CASE
+                WHEN ed.descripcion IS NOT NULL AND LOWER(ed.descripcion) LIKE '%extra%' THEN 'Extraordinario'
+                WHEN ed.descripcion IS NOT NULL AND LOWER(ed.descripcion) LIKE '%ordinario%' THEN 'Ordinario'
+                ELSE 'Otro'
+            END AS origen,
+            p.valor AS importe_pesos
+        FROM Pago p
+        LEFT JOIN Expensa_Detalle ed ON p.id_exp_detalle = ed.id_exp_detalle
+        LEFT JOIN Expensa e ON ed.id_expensa = e.id_expensa
+        WHERE e.id_consorcio = @id_consorcio
+          AND p.fecha BETWEEN @fecha_inicio AND @fecha_fin
+    ),
+    meses AS (SELECT DISTINCT periodo FROM pagos_origen)
+    SELECT periodo INTO #periodos_temp FROM meses;
 
-    IF @valor_dolar IS NULL SET @valor_dolar = 1;
+    DECLARE @cols NVARCHAR(MAX) = '';
+    SELECT @cols = @cols + QUOTENAME(periodo) + ',' FROM #periodos_temp;
+    SET @cols = LEFT(@cols, LEN(@cols)-1);
 
-    SELECT 
-        ed.tipo_gasto,
-        e.mes,
-        SUM(p.valor) AS TotalPesos,
-        SUM(p.valor) / @valor_dolar AS TotalDolares
-    INTO #temp
-    FROM Pago p
-    INNER JOIN Unidad_Funcional uf ON uf.id_uf = p.id_uf
-    INNER JOIN Expensa e ON e.id_uf = uf.id_uf
-    INNER JOIN Expensa_Detalle ed ON ed.id_expensa = e.id_expensa
-    WHERE YEAR(p.fecha) = @Anio
-      AND (@IdConsorcio IS NULL OR uf.id_consorcio = @IdConsorcio)
-      AND CAST(SUBSTRING(e.mes, 1, 2) AS INT) >= @MesInicio
-    GROUP BY ed.tipo_gasto, e.mes;
+    DECLARE @sql_pesos NVARCHAR(MAX) = N'
+    SELECT origen, ' + @cols + '
+    FROM
+    (
+        SELECT origen, periodo, importe_pesos FROM pagos_origen
+    ) src
+    PIVOT
+    (
+        SUM(importe_pesos) FOR periodo IN (' + @cols + ')
+    ) pvt
+    ORDER BY origen;
+    ';
 
-    SELECT *
-    FROM #temp
-    PIVOT (
-        SUM(TotalPesos) FOR tipo_gasto IN ([Ordinario],[Extraordinario])
-    ) AS PivotPesos;
+    PRINT '---- Recaudación por procedencia (PESOS) ----';
+    EXEC sp_executesql @sql_pesos;
 
-    SELECT *
-    FROM #temp
-    PIVOT (
-        SUM(TotalDolares) FOR tipo_gasto IN ([Ordinario],[Extraordinario])
-    ) AS PivotDolares;
+    DECLARE @sql_usd NVARCHAR(MAX) = N'
+    SELECT origen, ' + @cols + '
+    FROM
+    (
+        SELECT origen, periodo, (importe_pesos / ' + CAST(@venta AS VARCHAR(20)) + N') as importe_usd FROM pagos_origen
+    ) src
+    PIVOT
+    (
+        SUM(importe_usd) FOR periodo IN (' + @cols + ')
+    ) pvt
+    ORDER BY origen;
+    ';
+    PRINT '---- Recaudación por procedencia (USD) ----';
+    EXEC sp_executesql @sql_usd;
 
-    DROP TABLE #temp;
-END;
+    DROP TABLE IF EXISTS #periodos_temp;
+END
 GO

@@ -1,104 +1,96 @@
--- =============================================================
--- LOTE DE DATOS DE PRUEBA PARA SISTEMA DE CONSORCIOS
--- =============================================================
 
--- Limpiar datos (sin borrar estructura)
-DELETE FROM Pago_Importado;
-DELETE FROM Pago;
-DELETE FROM Expensa_Detalle;
-DELETE FROM Gasto_Extraordinario;
-DELETE FROM Gasto_Ordinario;
-DELETE FROM Expensa;
-DELETE FROM Proveedor;
-DELETE FROM Servicio;
-DELETE FROM Persona_UF;
-DELETE FROM Persona;
-DELETE FROM Tipo_Ocupante;
-DELETE FROM Complemento;
-DELETE FROM Unidad_Funcional;
-DELETE FROM Consorcio;
+USE Com2900G09;
+GO
 
-INSERT INTO Consorcio (nombre, direccion, admin_nombre, admin_cuit, admin_email)
-VALUES 
-('Altos de Saint Just', 'Av. San Martín 1234', 'María González', '20345678901', 'admin1@altos.com'),
-('Torre Mitre', 'Mitre 456', 'Jorge Pérez', '20123456789', 'jorgep@mitre.com');
+-- ===============================================
+-- DATOS DE PRUEBA PARA TABLAS DE CONSORCIO Y UF
+-- ===============================================
+
+INSERT INTO Consorcio (nombre, cuit)
+VALUES
+('Consorcio Av. Libertador 1234', '30712345001'),
+('Consorcio Rivadavia 5678', '30712345002');
 
 INSERT INTO Unidad_Funcional (id_consorcio, nr_uf, piso, departamento, coeficiente, m2)
 VALUES
-(1, 1, '1', 'A', 0.10, 55.50),
-(1, 2, '1', 'B', 0.10, 60.00),
-(2, 1, 'PB', 'A', 0.20, 80.00),
-(2, 2, '2', 'A', 0.15, 70.00);
+(1, 1, '1', 'A', 10.50, 50.00),
+(1, 2, '2', 'B', 9.50, 45.00),
+(2, 1, 'PB', '1', 12.00, 60.00),
+(2, 2, '1', 'A', 8.00, 40.00);
 
 INSERT INTO Complemento (id_uf, m2, tipo_complemento)
 VALUES
-(1, 5.00, 'Cochera'),
-(2, 3.00, 'Baulera'),
-(3, 6.00, 'Cochera');
+(1, 10, 'Cochera'),
+(1, 5, 'Baulera'),
+(2, 12, 'Cochera'),
+(3, 8, 'Baulera'),
+(4, 10, 'Cochera');
+
+-- ===============================================
+-- TIPOS DE OCUPANTE Y PERSONAS
+-- ===============================================
 
 INSERT INTO Tipo_Ocupante (descripcion)
-VALUES ('Propietario'), ('Inquilino'), ('Administrador');
+VALUES ('Propietario'), ('Inquilino');
 
 INSERT INTO Persona (DNI, id_tipo_ocupante, nombre, apellido, email_personal, telefono, cbu_cvu)
 VALUES
-('30123456', 1, 'Lucía', 'Martínez', 'lucia@gmail.com', '1122334455', '1234567890123456789012'),
-('40234567', 2, 'Carlos', 'Fernández', 'carlosf@gmail.com', '1199887766', '9876543210987654321098'),
-('50345678', 3, 'María', 'González', 'admin1@altos.com', '1144556677', '4567891234567891234567');
+('30123456', 1, 'Juan', 'Pérez', 'juanp@gmail.com', '1156789999', '2850590940090418123456'),
+('30234567', 1, 'María', 'Gómez', 'mariagomez@gmail.com', '1156798888', '2850590940090418456789'),
+('30345678', 2, 'Lucas', 'Díaz', 'lucasd@gmail.com', '1156791111', '2850590940090418451234'),
+('30456789', 2, 'Ana', 'Ruiz', 'anar@gmail.com', '1156792222', '2850590940090418456781');
 
 INSERT INTO Persona_UF (DNI, id_uf, fecha_inicio, fecha_fin)
 VALUES
 ('30123456', 1, '2023-01-01', NULL),
-('40234567', 2, '2023-06-01', NULL),
-('50345678', 3, '2022-01-01', NULL);
+('30234567', 2, '2023-03-01', NULL),
+('30345678', 3, '2023-02-01', '2024-02-01'),
+('30456789', 4, '2023-05-01', NULL);
+
+-- ===============================================
+-- SERVICIOS Y EXPENSAS
+-- ===============================================
 
 INSERT INTO Servicio (nro_cuenta, mes, categoria, valor)
 VALUES
-('123-456', 10, 'Luz', 5000.00),
-('789-123', 10, 'Agua', 3500.00),
-('456-789', 10, 'Gas', 4200.00);
+('Luz-001', 1, 'Luz', 30000),
+('Agua-002', 1, 'Agua', 20000),
+('Gas-003', 2, 'Gas', 25000),
+('Internet-004', 2, 'Internet', 15000);
 
-INSERT INTO Proveedor (nombre, nro_cuenta, descripcion, cuit, email, telefono)
+INSERT INTO Expensa (id_consorcio, mes, importe_total)
 VALUES
-('Edesur', 'ACC-001', 'Electricidad', '30765432109', 'contacto@edesur.com', '1140000000'),
-('Aysa', 'ACC-002', 'Agua potable', '30876543210', 'info@aysa.com', '1130000000'),
-('Metrogas', 'ACC-003', 'Gas natural', '30987654321', 'servicio@metrogas.com', '1120000000');
+(1, '2024-01', 80000),
+(1, '2024-02', 85000),
+(2, '2024-01', 70000),
+(2, '2024-02', 90000);
 
-INSERT INTO Expensa (id_uf, mes, vencimiento, valor)
+INSERT INTO Factura (id_servicio, id_expensa, fecha_emision, fecha_vencimiento, importe, detalle)
 VALUES
-(1, '2024-09', '2024-09-10', 20000.00),
-(2, '2024-09', '2024-09-10', 22000.00),
-(3, '2024-09', '2024-09-10', 30000.00);
+(1, 1, '2024-01-05', '2024-01-20', 30000, 'Factura Luz'),
+(2, 1, '2024-01-06', '2024-01-25', 20000, 'Factura Agua'),
+(3, 2, '2024-02-07', '2024-02-20', 25000, 'Factura Gas'),
+(4, 2, '2024-02-07', '2024-02-25', 15000, 'Factura Internet');
 
-INSERT INTO Gasto_Ordinario (id_expensa, id_proveedor, id_servicio, periodo, nro_factura, detalle, importe)
+-- ===============================================
+-- DETALLES DE EXPENSAS
+-- ===============================================
+
+INSERT INTO Expensa_Detalle (id_expensa, nro_cuota, total_cuotas, descripcion, fecha_venc, importe_uf, estado)
 VALUES
-(1, 1, 1, '2024-09', 'F001-0001', 'Electricidad septiembre', 5000.00),
-(2, 2, 2, '2024-09', 'A001-0001', 'Agua septiembre', 3500.00),
-(3, 3, 3, '2024-09', 'G001-0001', 'Gas septiembre', 4200.00);
+(1, 1, 1, 'Expensa Ordinaria Ene', '2024-01-15', 40000, 'Pagado'),
+(1, 1, 1, 'Expensa Extraordinaria', '2024-01-20', 15000, 'Pagado'),
+(2, 1, 1, 'Expensa Ordinaria Feb', '2024-02-15', 45000, 'Pendiente'),
+(3, 1, 1, 'Expensa Ordinaria Ene', '2024-01-18', 35000, 'Pagado'),
+(4, 1, 1, 'Expensa Extraordinaria Feb', '2024-02-18', 50000, 'Pagado');
 
-INSERT INTO Gasto_Extraordinario (id_expensa, id_proveedor, total_cuotas, nro_cuota, detalle, importe)
+-- ===============================================
+-- PAGOS
+-- ===============================================
+
+INSERT INTO Pago (id_pago, id_exp_detalle, fecha, cvu_cbu, valor)
 VALUES
-(1, 1, 3, 1, 'Pintura fachada', 15000.00),
-(2, 2, 2, 1, 'Reparación tanque', 10000.00),
-(3, 3, 1, 1, 'Cambio portón', 20000.00);
-
-INSERT INTO Expensa_Detalle (id_expensa, tipo_gasto, fecha_venc, importe_uf, estado)
-VALUES
-(1, 'Ordinario', '2024-09-10', 5000.00, 'Pagado'),
-(1, 'Extraordinario', '2024-09-15', 15000.00, 'Pendiente'),
-(2, 'Ordinario', '2024-09-10', 3500.00, 'Pagado'),
-(3, 'Extraordinario', '2024-09-15', 20000.00, 'Vencido');
-
-INSERT INTO Pago (id_uf, fecha, medio_pago, valor)
-VALUES
-(1, '2024-09-05', 'Transferencia', 5000.00),
-(1, '2024-09-15', 'Efectivo', 15000.00),
-(2, '2024-09-06', 'Tarjeta', 3500.00),
-(3, '2024-09-20', 'Transferencia', 20000.00);
-
-INSERT INTO Pago_Importado (id_pago, fecha_importacion, cuenta_origen)
-VALUES
-(1, '2024-09-06', '1234567890123456789012'),
-(2, '2024-09-16', '1234567890123456789012'),
-(3, '2024-09-07', '9876543210987654321098'),
-(4, '2024-09-21', '4567891234567891234567');
-
+(1, 1, '2024-01-14', '2850590940090418123456', 40000),
+(2, 2, '2024-01-19', '2850590940090418456789', 15000),
+(3, 4, '2024-01-17', '2850590940090418451234', 35000),
+(4, 5, '2024-02-19', '2850590940090418456781', 50000);

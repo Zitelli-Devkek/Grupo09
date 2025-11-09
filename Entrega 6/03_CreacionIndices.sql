@@ -15,56 +15,32 @@ Zitelli Emanuel (DNI 45.064.107)
 Genere índices para optimizar la ejecución de las consultas de los reportes. Debe existir un
 script adicional con la generación de índices.*/
 
-
-
-
-USE AltosSaintJust
+USE Com2900G09;
 GO
 
-DROP INDEX IF EXISTS IX_Pago_fecha ON dbo.Pago;
-CREATE INDEX IX_Pago_fecha ON dbo.Pago(fecha);
+SET NOCOUNT ON;
+GO
 
-DROP INDEX IF EXISTS IX_Pago_id_uf ON dbo.Pago;
-CREATE INDEX IX_Pago_id_uf ON dbo.Pago(id_uf);
+-- Índices en Pago
+CREATE INDEX IF NOT EXISTS IX_Pago_fecha ON Pago(fecha);
+CREATE INDEX IF NOT EXISTS IX_Pago_cvu_cbu ON Pago(cvu_cbu);
+CREATE INDEX IF NOT EXISTS IX_Pago_id_exp_detalle ON Pago(id_exp_detalle);
 
-DROP INDEX IF EXISTS IX_Pago_valor ON dbo.Pago;
-CREATE INDEX IX_Pago_valor ON dbo.Pago(valor);
+-- Índices en Expensa y Expensa_Detalle
+CREATE INDEX IF NOT EXISTS IX_Expensa_id_consorcio_mes ON Expensa(id_consorcio, mes);
+CREATE INDEX IF NOT EXISTS IX_ExpensaDetalle_id_expensa_fecha ON Expensa_Detalle(id_expensa, fecha_venc);
+CREATE INDEX IF NOT EXISTS IX_ExpensaDetalle_descripcion ON Expensa_Detalle(descripcion);
 
-DROP INDEX IF EXISTS IX_Expensa_mes ON dbo.Expensa;
-CREATE INDEX IX_Expensa_mes ON dbo.Expensa(mes);
+-- Personas / relacion
+CREATE INDEX IF NOT EXISTS IX_Persona_cbu_cvu ON Persona(cbu_cvu);
+CREATE INDEX IF NOT EXISTS IX_Persona_id_tipo_ocupante ON Persona(id_tipo_ocupante);
 
-DROP INDEX IF EXISTS IX_Expensa_id_uf ON dbo.Expensa;
-CREATE INDEX IX_Expensa_id_uf ON dbo.Expensa(id_uf);
+-- Unidad Funcional
+CREATE INDEX IF NOT EXISTS IX_UF_id_consorcio_departamento ON Unidad_Funcional(id_consorcio, departamento);
 
-DROP INDEX IF EXISTS IX_Expensa_vencimiento ON dbo.Expensa;
-CREATE INDEX IX_Expensa_vencimiento ON dbo.Expensa(vencimiento);
+-- Factura / Servicio
+CREATE INDEX IF NOT EXISTS IX_Factura_id_expensa_fecha ON Factura(id_expensa, fecha_emision);
+CREATE INDEX IF NOT EXISTS IX_Factura_id_servicio ON Factura(id_servicio);
 
-DROP INDEX IF EXISTS IX_ExpensaDet_id_expensa ON dbo.Expensa_Detalle;
-CREATE INDEX IX_ExpensaDet_id_expensa ON dbo.Expensa_Detalle(id_expensa);
-
-DROP INDEX IF EXISTS IX_ExpensaDet_tipo_gasto ON dbo.Expensa_Detalle;
-CREATE INDEX IX_ExpensaDet_tipo_gasto ON dbo.Expensa_Detalle(tipo_gasto);
-
-DROP INDEX IF EXISTS IX_ExpensaDet_fecha_venc ON dbo.Expensa_Detalle;
-CREATE INDEX IX_ExpensaDet_fecha_venc ON dbo.Expensa_Detalle(fecha_venc);
-
-DROP INDEX IF EXISTS IX_GastoOrd_id_expensa ON dbo.Gasto_Ordinario;
-CREATE INDEX IX_GastoOrd_id_expensa ON dbo.Gasto_Ordinario(id_expensa);
-
-DROP INDEX IF EXISTS IX_GastoOrd_importe ON dbo.Gasto_Ordinario;
-CREATE INDEX IX_GastoOrd_importe ON dbo.Gasto_Ordinario(importe);
-
-DROP INDEX IF EXISTS IX_GastoExt_id_expensa ON dbo.Gasto_Extraordinario;
-CREATE INDEX IX_GastoExt_id_expensa ON dbo.Gasto_Extraordinario(id_expensa);
-
-DROP INDEX IF EXISTS IX_GastoExt_importe ON dbo.Gasto_Extraordinario;
-CREATE INDEX IX_GastoExt_importe ON dbo.Gasto_Extraordinario(importe);
-
-DROP INDEX IF EXISTS IX_UF_id_consorcio ON dbo.Unidad_Funcional;
-CREATE INDEX IX_UF_id_consorcio ON dbo.Unidad_Funcional(id_consorcio);
-
-DROP INDEX IF EXISTS IX_PersonaUF_DNI ON dbo.Persona_UF;
-CREATE INDEX IX_PersonaUF_DNI ON dbo.Persona_UF(DNI);
-
-DROP INDEX IF EXISTS IX_PersonaUF_id_uf ON dbo.Persona_UF;
-CREATE INDEX IX_PersonaUF_id_uf ON dbo.Persona_UF(id_uf);
+-- Tipo_Ocupante (poco crítico, pero OK)
+CREATE INDEX IF NOT EXISTS IX_Persona_Tipo ON Persona(id_tipo_ocupante);

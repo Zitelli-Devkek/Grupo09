@@ -17,59 +17,87 @@ Obtenga los 3 (tres) propietarios con mayor morosidad. Presente información de c
 DNI de los propietarios para que la administración los pueda contactar o remitir el trámite al
 estudio jurídico.*/
 
-CREATE OR ALTER PROCEDURE sp_Reporte5_MayorMorosidad
-    @Anio INT,
-    @IdConsorcio INT = NULL
+USE Com2900G09
+GO
+
+
+
+CREATE OR ALTER PROCEDURE dbo.sp_Report_Top3Morosos_XML
+    @id_consorcio INT,
+    @fecha_inicio DATE,
+    @fecha_fin DATE
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    SELECT TOP 3
-        p.DNI AS '@DNI',
-        per.nombre AS 'Nombre',
-        per.apellido AS 'Apellido',
-        per.email_personal AS 'Email',
-        per.telefono AS 'Telefono',
-        COUNT(*) AS 'CantidadVencidas'
-    FROM Expensa_Detalle ed
-    INNER JOIN Expensa e ON e.id_expensa = ed.id_expensa
-    INNER JOIN Unidad_Funcional uf ON uf.id_uf = e.id_uf
-    INNER JOIN Persona_UF p ON p.id_uf = uf.id_uf
-    INNER JOIN Persona per ON per.DNI = p.DNI
-    WHERE ed.estado = 'Vencido'
-      AND YEAR(e.vencimiento) = @Anio
-      AND (@IdConsorcio IS NULL OR uf.id_consorcio = @IdConsorcio)
-    GROUP BY p.DNI, per.nombre, per.apellido, per.email_personal, per.telefono
-    ORDER BY CantidadVencidas DESC
-    FOR XML PATH('Moroso'), ROOT('MayoresMorosos'), ELEMENTS;
-END;
-GO
+    DECLARE @venta DECIMAL(18,6) = NULL;
+    SELECT TOP 1 @venta = venta FROM ##DolarHistorico WHERE venta IS NOT NULL ORDER BY fecha DESC;
+    IF @venta IS NULL SET @venta = 1;
 
-/*
-CREATE OR ALTER PROCEDURE sp_Reporte5_MayorMorosidad
-    @Anio INT,
-    @IdConsorcio INT
-AS
-BEGIN
-    SET NOCOUNT ON;
+    /*
+      Lógica de deuda por propietario:
+      - deuda = suma(importe_uf de expensa_detalle vinculada a la UF del propietario en ese periodo)
+               - pagos realizados por ese propietario (mapeando Pago.cvu_cbu = Persona.cbu_cvu)
+      - atribuimos Expensa_Detalle a una UF: asumimos que Expensa_Detalle tiene aplicabilidad a todas las UF,
+        pero vamos a estimar deuda por UF proporcional o, mejor: si Expensa_Detalle tuviera un id_uf
+        usaríamos eso. Dado que no existe, asumimos: cada Expensa_Detalle aplicado a la UF del propietario
+        cuando el pago/registro esté en la fecha del periodo. (Usamos unión via Persona_UF)
+    */
 
+    ;WITH deuda_por_persona AS (
+        -- total cargos (sum de importe_uf) asignados a cada propietario según su UF vigente
+        SELECT
+            per.DNI,
+            per.nombre,
+            per.apellido,
+            per.email_personal,
+            per.telefono,
+            SUM(ISNULL(ed.importe_uf,0)) AS total_cargos_pesos
+        FROM Persona per
+        LEFT JOIN Persona_UF puf ON puf.DNI = per.DNI
+            AND puf.fecha_inicio <= @fecha_fin
+            AND (puf.fecha_fin IS NULL OR puf.fecha_fin >= @fecha_inicio)
+        LEFT JOIN Unidad_Funcional uf ON uf.id_uf = puf.id_uf
+        LEFT JOIN Expensa e ON e.id_consorcio = @id_consorcio
+        LEFT JOIN Expensa_Detalle ed ON ed.id_expensa = e.id_expensa
+            AND ed.fecha_venc BETWEEN @fecha_inicio AND @fecha_fin
+        WHERE per.id_tipo_ocupante IS NOT NULL
+        GROUP BY per.DNI, per.nombre, per.apellido, per.email_personal, per.telefono
+    ),
+    pagos_por_persona AS (
+        -- pagos realizados por persona (mapeo por cuenta)
+        SELECT
+            per.DNI,
+            SUM(p.valor) AS total_pagos_pesos
+        FROM Pago p
+        LEFT JOIN Persona per ON per.cbu_cvu = p.cvu_cbu
+        LEFT JOIN Expensa_Detalle ed ON p.id_exp_detalle = ed.id_exp_detalle
+        LEFT JOIN Expensa e ON ed.id_expensa = e.id_expensa
+        WHERE e.id_consorcio = @id_consorcio
+          AND p.fecha BETWEEN @fecha_inicio AND @fecha_fin
+        GROUP BY per.DNI
+    ),
+    resumen AS (
+        SELECT
+            d.DNI,
+            d.nombre,
+            d.apellido,
+            d.email_personal,
+            d.telefono,
+            COALESCE(d.total_cargos_pesos,0) - COALESCE(pp.total_pagos_pesos,0) AS monto_deuda_pesos
+        FROM deuda_por_persona d
+        LEFT JOIN pagos_por_persona pp ON pp.DNI = d.DNI
+    )
     SELECT TOP 3
-        p.DNI,
-        per.nombre,
-        per.apellido,
-        per.email_personal,
-        per.telefono,
-        COUNT(*) AS CantidadVencidas
-    FROM Expensa_Detalle ed
-    INNER JOIN Expensa e ON e.id_expensa = ed.id_expensa
-    INNER JOIN Unidad_Funcional uf ON uf.id_uf = e.id_uf
-    INNER JOIN Persona_UF p ON p.id_uf = uf.id_uf
-    INNER JOIN Persona per ON per.DNI = p.DNI
-    WHERE ed.estado = 'Vencido'
-      AND YEAR(e.vencimiento) = @Anio
-      AND (@IdConsorcio IS NULL OR uf.id_consorcio = @IdConsorcio)
-    GROUP BY p.DNI, per.nombre, per.apellido, per.email_personal, per.telefono
-    ORDER BY CantidadVencidas DESC;
-END;
+        DNI,
+        nombre,
+        apellido,
+        email_personal,
+        telefono,
+        monto_deuda_pesos,
+        ROUND(monto_deuda_pesos / @venta,2) AS monto_deuda_usd
+    FROM resumen
+    ORDER BY monto_deuda_pesos DESC
+    FOR XML PATH('Propietario'), ROOT('Morosos');
+END
 GO
-*/
