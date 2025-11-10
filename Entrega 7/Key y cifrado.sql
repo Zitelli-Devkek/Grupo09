@@ -57,7 +57,7 @@ ALTER TABLE Persona ADD CVU_CBU_Enc VARBINARY(256);
 GO
 
 
-UPDATE Propietario
+UPDATE Persona
 SET 
     DNI_Enc = ENCRYPTBYKEY(KEY_GUID('SK_DatosSensibles'), DNI),
     Email_Enc = ENCRYPTBYKEY(KEY_GUID('SK_DatosSensibles'), email_personal),
@@ -81,6 +81,7 @@ GO
 
 CLOSE SYMMETRIC KEY SK_DatosSensibles;
 GO
+
 
 
 
