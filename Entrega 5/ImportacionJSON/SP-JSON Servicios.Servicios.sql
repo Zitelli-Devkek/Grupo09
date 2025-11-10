@@ -84,7 +84,7 @@ BEGIN
 
         PRINT 'Archivo JSON cargado correctamente.';
 
-		-- Inserta los servicios unificados (unpivot) y normaliza montos
+		-- Inserta los servicios unificados y normaliza montos
 		-- uso CTE para la insercción de datos
 		-- Tomo la tabla temporal y limpiamos de posibles espacios en nombre de consorcio y mes
 		WITH tabla_tempora_norm AS (
@@ -156,3 +156,4 @@ BEGIN
     END CATCH;
 END;
 GO
+
