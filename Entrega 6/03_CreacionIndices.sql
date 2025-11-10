@@ -18,29 +18,33 @@ script adicional con la generación de índices.*/
 USE Com2900G09;
 GO
 
-SET NOCOUNT ON;
-GO
+--Estos son fundamentales porque los procedimientos usan muchos JOIN entre esas tablas.
+CREATE INDEX IX_UF_id_consorcio ON Unidad_Funcional (id_consorcio);
+CREATE INDEX IX_Complemento_id_uf ON Complemento (id_uf);
+CREATE INDEX IX_Persona_id_tipo_ocupante ON Persona (id_tipo_ocupante);
+CREATE INDEX IX_PersonaUF_DNI ON Persona_UF (DNI);
+CREATE INDEX IX_PersonaUF_id_uf ON Persona_UF (id_uf);
+CREATE INDEX IX_Expensa_id_consorcio ON Expensa (id_consorcio);
+CREATE INDEX IX_Factura_id_expensa ON Factura (id_expensa);
+CREATE INDEX IX_Factura_id_servicio ON Factura (id_servicio);
+CREATE INDEX IX_ExpensaDet_id_expensa ON Expensa_Detalle (id_expensa);
+CREATE INDEX IX_Pago_id_exp_detalle ON Pago (id_exp_detalle);
 
--- Índices en Pago
-CREATE INDEX IF NOT EXISTS IX_Pago_fecha ON Pago(fecha);
-CREATE INDEX IF NOT EXISTS IX_Pago_cvu_cbu ON Pago(cvu_cbu);
-CREATE INDEX IF NOT EXISTS IX_Pago_id_exp_detalle ON Pago(id_exp_detalle);
+--Usada en varios reportes por fecha y id_exp_detalle.
+CREATE INDEX IX_Pago_fecha ON Pago (fecha);
+CREATE INDEX IX_Pago_cvu_cbu ON Pago (cvu_cbu);
+CREATE INDEX IX_Pago_id_exp_detalle_fecha ON Pago (id_exp_detalle, fecha);
 
--- Índices en Expensa y Expensa_Detalle
-CREATE INDEX IF NOT EXISTS IX_Expensa_id_consorcio_mes ON Expensa(id_consorcio, mes);
-CREATE INDEX IF NOT EXISTS IX_ExpensaDetalle_id_expensa_fecha ON Expensa_Detalle(id_expensa, fecha_venc);
-CREATE INDEX IF NOT EXISTS IX_ExpensaDetalle_descripcion ON Expensa_Detalle(descripcion);
+--Esto acelera los procedimientos que separan pagos “ordinarios / extraordinarios”.
+CREATE INDEX IX_ExpensaDetalle_fecha_venc ON Expensa_Detalle (fecha_venc);
+CREATE INDEX IX_ExpensaDetalle_id_expensa_descripcion ON Expensa_Detalle (id_expensa, descripcion);
 
--- Personas / relacion
-CREATE INDEX IF NOT EXISTS IX_Persona_cbu_cvu ON Persona(cbu_cvu);
-CREATE INDEX IF NOT EXISTS IX_Persona_id_tipo_ocupante ON Persona(id_tipo_ocupante);
+--Optimiza sp_Report_Top5GastosIngresos.
+CREATE INDEX IX_Factura_fecha_emision ON Factura (fecha_emision);
+CREATE INDEX IX_Factura_id_expensa_fecha_emision ON Factura (id_expensa, fecha_emision);
 
--- Unidad Funcional
-CREATE INDEX IF NOT EXISTS IX_UF_id_consorcio_departamento ON Unidad_Funcional(id_consorcio, departamento);
+--Consultada por id_consorcio y a veces mes.
+CREATE INDEX IX_Expensa_id_consorcio_mes ON Expensa (id_consorcio, mes);
 
--- Factura / Servicio
-CREATE INDEX IF NOT EXISTS IX_Factura_id_expensa_fecha ON Factura(id_expensa, fecha_emision);
-CREATE INDEX IF NOT EXISTS IX_Factura_id_servicio ON Factura(id_servicio);
-
--- Tipo_Ocupante (poco crítico, pero OK)
-CREATE INDEX IF NOT EXISTS IX_Persona_Tipo ON Persona(id_tipo_ocupante);
+--Mapeada por cbu_cvu y DNI en sp_Report_Top3Morosos_XML.
+CREATE INDEX IX_Persona_cbu_cvu ON Persona (cbu_cvu);
