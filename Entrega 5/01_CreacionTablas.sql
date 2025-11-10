@@ -74,7 +74,7 @@ CREATE TABLE Persona_UF (
 CREATE TABLE Servicio (
     id_servicio INT IDENTITY(1,1) PRIMARY KEY,
     nro_cuenta VARCHAR(30) NOT NULL,
-    mes TINYINT NOT NULL CHECK (mes BETWEEN 1 AND 12),
+    mes VARCHAR(20) NOT NULL,
     categoria VARCHAR(50) NOT NULL,
     valor DECIMAL (10,2) NOT NULL CHECK (valor >= 0)
 );
