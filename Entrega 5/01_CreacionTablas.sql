@@ -17,7 +17,7 @@ DROP TABLE IF EXISTS Consorcio;
 CREATE TABLE Consorcio (
     id_consorcio INT IDENTITY(1,1) PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
-    cuit CHAR(11) NOT NULL UNIQUE,
+    cuit CHAR(11) NOT NULL UNIQUE
 );
 
 
@@ -85,7 +85,7 @@ CREATE TABLE Expensa (
     id_consorcio INT NOT NULL
         CONSTRAINT FK_UF_Consorcio2 FOREIGN KEY REFERENCES Consorcio(id_consorcio),
     mes CHAR(7) NOT NULL,
-    importe_total DECIMAL(10,2) NOT NULL CHECK (importe_total >= 0),
+    importe_total DECIMAL(10,2) NOT NULL CHECK (importe_total >= 0)
 );
 
 CREATE TABLE Factura (
@@ -110,7 +110,7 @@ CREATE TABLE Expensa_Detalle (
     descripcion VARCHAR(50),
     fecha_venc DATE,
     importe_uf DECIMAL(10,2) CHECK (importe_uf >= 0),
-    estado VARCHAR(20) CHECK (estado IN ('Pendiente','Pagado','Vencido')),
+    estado VARCHAR(20) CHECK (estado IN ('Pendiente','Pagado','Vencido'))
 );
 
 
@@ -119,7 +119,7 @@ CREATE TABLE Pago (
     id_exp_detalle INT NULL
         CONSTRAINT FK_exp_detalle FOREIGN KEY REFERENCES Expensa_Detalle(id_exp_detalle),
     fecha DATE NOT NULL,
-    cvu_cbu CHAR(20) NOT NULL,
-    valor DECIMAL(10,2) NOT NULL CHECK (valor > 0),
-   
+    cvu_cbu CHAR(30) NOT NULL,
+    valor DECIMAL(10,2) NOT NULL CHECK (valor > 0)
+  
 );

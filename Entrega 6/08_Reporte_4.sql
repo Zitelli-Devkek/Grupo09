@@ -13,9 +13,9 @@ Zitelli Emanuel (DNI 45.064.107)
 
 
 Reporte 4
-Obtenga los 5 (cinco) meses de mayores gastos y los 5 (cinco) de mayores ingresos. */
+Obtenga los 5 (cinco) meses de mayores gastos y los 5 (cinco) de mayores ingresos.*/
 
-USE Com2900G09
+USE Com2900G09;
 GO
 
 CREATE OR ALTER PROCEDURE dbo.sp_Report_Top5GastosIngresos
@@ -26,37 +26,58 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    -- GASTOS por mes (Facturas vinculadas a Expensa -> Expensa.id_consorcio)
+    -- Top 5 GASTOS
     ;WITH facturas_cte AS (
         SELECT
             FORMAT(f.fecha_emision,'yyyy-MM') AS periodo,
-            SUM(f.importe) AS total_gastos
+            ROUND(SUM(f.importe),2) AS total
         FROM Factura f
-        LEFT JOIN Servicio s ON f.id_servicio = s.id_servicio
-        LEFT JOIN Expensa e ON f.id_expensa = e.id_expensa
+        INNER JOIN Expensa e ON f.id_expensa = e.id_expensa
         WHERE e.id_consorcio = @id_consorcio
           AND f.fecha_emision BETWEEN @fecha_inicio AND @fecha_fin
         GROUP BY FORMAT(f.fecha_emision,'yyyy-MM')
-    ),
-    ingresos_cte AS (
+    )
+    SELECT TOP 5
+        'Gasto' AS tipo,
+        periodo,
+        total
+    INTO #top_gastos
+    FROM facturas_cte
+    ORDER BY total DESC;
+
+    -- Top 5 INGRESOS
+    ;WITH ingresos_cte AS (
         SELECT
             FORMAT(p.fecha,'yyyy-MM') AS periodo,
-            SUM(p.valor) AS total_ingresos
+            ROUND(SUM(p.valor),2) AS total
         FROM Pago p
-        LEFT JOIN Expensa_Detalle ed ON p.id_exp_detalle = ed.id_exp_detalle
-        LEFT JOIN Expensa e ON ed.id_expensa = e.id_expensa
+        INNER JOIN Expensa_Detalle ed ON p.id_exp_detalle = ed.id_exp_detalle
+        INNER JOIN Expensa e ON ed.id_expensa = e.id_expensa
         WHERE e.id_consorcio = @id_consorcio
           AND p.fecha BETWEEN @fecha_inicio AND @fecha_fin
         GROUP BY FORMAT(p.fecha,'yyyy-MM')
     )
-    -- Top 5 gastos
-    SELECT TOP 5 periodo, total_gastos
-    FROM facturas_cte
-    ORDER BY total_gastos DESC;
-
-    -- Top 5 ingresos
-    SELECT TOP 5 periodo, total_ingresos
+    SELECT TOP 5
+        'Ingreso' AS tipo,
+        periodo,
+        total
+    INTO #top_ingresos
     FROM ingresos_cte
-    ORDER BY total_ingresos DESC;
-END
+    ORDER BY total DESC;
+
+    -- Combinamos en una sola tabla final
+    SELECT tipo, periodo, total
+    FROM #top_gastos
+    UNION ALL
+    SELECT tipo, periodo, total
+    FROM #top_ingresos
+    ORDER BY tipo, total DESC;
+
+    -- Limpiamos temporales
+    DROP TABLE #top_gastos;
+    DROP TABLE #top_ingresos;
+END;
 GO
+
+
+

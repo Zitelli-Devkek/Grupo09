@@ -34,9 +34,9 @@ EXEC dbo.sp_Report_RecaudacionMesDepartamento
 
 
 -- 3) Recaudación por procedencia (Ordinario/Extra/Otro)
-EXEC dbo.sp_Report_RecaudacionPorProcedencia
+EXEC dbo.sp_Report_RecaudacionPorProcedencia_Unica
     @id_consorcio = 1,
-    @fecha_inicio = '2025-01-01',
+    @fecha_inicio = '2024-01-01',
     @fecha_fin = '2025-10-31';
 
 -- 4) Top 5 meses gastos / ingresos

@@ -18,76 +18,98 @@ Presente el total de recaudación por mes y departamento en formato de tabla cruz
 USE Com2900G09
 GO
 
-
-CREATE OR ALTER PROCEDURE dbo.sp_Report_RecaudacionMesDepartamento
-    @anio INT,
-    @id_consorcio INT = NULL,
-    @tipo_moneda VARCHAR(10) = 'PESOS'  -- 'PESOS' o 'USD'
+CREATE OR ALTER PROCEDURE dbo.sp_Reporte2_RecaudacionMensual
+    @Anio INT,
+    @IdConsorcio INT = NULL,
+    @MesInicio INT = 1,
+    @tipo_dolar NVARCHAR(50) = 'Blue'
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    --------------------------------------------------------------------
-    -- Obtener cotización del dólar más reciente desde la API
-    --------------------------------------------------------------------
-    DECLARE @dolar DECIMAL(10,2) = (
-        SELECT TOP 1 venta FROM ##DolarHistorico ORDER BY fecha DESC
-    );
-    IF @dolar IS NULL
-        SET @dolar = 1000;  -- Valor de respaldo si la API no respondió
+    DECLARE @valor_dolar DECIMAL(10,2);
 
-    --------------------------------------------------------------------
-    -- Obtener datos base: recaudación por mes y departamento
-    --------------------------------------------------------------------
-    ;WITH CTE_Recaudacion AS (
-        SELECT 
-            c.id_consorcio,
-            uf.departamento,
-            e.mes,
-            SUM(p.valor) AS total_pesos
-        FROM Pago p
-        INNER JOIN Expensa_Detalle ed ON p.id_exp_detalle = ed.id_exp_detalle
-        INNER JOIN Expensa e ON ed.id_expensa = e.id_expensa
-        INNER JOIN Unidad_Funcional uf ON uf.id_consorcio = e.id_consorcio
-        INNER JOIN Consorcio c ON c.id_consorcio = e.id_consorcio
-        WHERE LEFT(e.mes, 4) = CAST(@anio AS CHAR(4))
-        GROUP BY c.id_consorcio, uf.departamento, e.mes
-    )
-    --------------------------------------------------------------------
-    -- Conversión según tipo de moneda
-    --------------------------------------------------------------------
+    -- Tomamos el valor más reciente del tipo de dólar seleccionado
+    IF OBJECT_ID('tempdb..##DolarHistorico') IS NOT NULL
+    BEGIN
+        SELECT TOP 1 @valor_dolar = venta
+        FROM ##DolarHistorico
+        WHERE tipo = @tipo_dolar
+        ORDER BY fecha DESC;
+    END
+
+    IF @valor_dolar IS NULL SET @valor_dolar = 1;
+
+    -- Tabla temporal con recaudación por departamento y mes
     SELECT 
-        departamento,
-        [2024-01] AS Ene,
-        [2024-02] AS Feb,
-        [2024-03] AS Mar,
-        [2024-04] AS Abr,
-        [2024-05] AS May,
-        [2024-06] AS Jun,
-        [2024-07] AS Jul,
-        [2024-08] AS Ago,
-        [2024-09] AS Sep,
-        [2024-10] AS Oct,
-        [2024-11] AS Nov,
-        [2024-12] AS Dic
-    FROM (
-        SELECT 
-            departamento,
-            mes,
-            CASE 
-                WHEN @tipo_moneda = 'USD' THEN total_pesos / @dolar
-                ELSE total_pesos
-            END AS total
-        FROM CTE_Recaudacion
-        WHERE (@id_consorcio IS NULL OR id_consorcio = @id_consorcio)
-    ) AS SourceTable
-    PIVOT (
-        SUM(total)
-        FOR mes IN ([2024-01],[2024-02],[2024-03],[2024-04],[2024-05],
-                    [2024-06],[2024-07],[2024-08],[2024-09],[2024-10],
-                    [2024-11],[2024-12])
-    ) AS PivotTable
-    ORDER BY departamento;
+        uf.departamento,
+        MONTH(p.fecha) AS Mes,
+        SUM(p.valor) AS TotalPesos,
+        SUM(p.valor) / @valor_dolar AS TotalDolares
+    INTO #temp
+    FROM Pago p
+    INNER JOIN Expensa_Detalle ed ON p.id_exp_detalle = ed.id_exp_detalle
+    INNER JOIN Expensa e ON e.id_expensa = ed.id_expensa
+    INNER JOIN Unidad_Funcional uf ON uf.id_consorcio = e.id_consorcio
+    WHERE YEAR(p.fecha) = @Anio
+      AND MONTH(p.fecha) >= @MesInicio
+      AND (@IdConsorcio IS NULL OR uf.id_consorcio = @IdConsorcio)
+    GROUP BY uf.departamento, MONTH(p.fecha);
 
+    -- Pivot pesos
+    SELECT * INTO #pivot_pesos
+    FROM
+    (
+        SELECT departamento, Mes, TotalPesos
+        FROM #temp
+    ) src
+    PIVOT
+    (
+        SUM(TotalPesos) FOR Mes IN ([1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12])
+    ) AS p;
+
+    -- Pivot dólares
+    SELECT * INTO #pivot_dolares
+    FROM
+    (
+        SELECT departamento, Mes, TotalDolares
+        FROM #temp
+    ) src
+    PIVOT
+    (
+        SUM(TotalDolares) FOR Mes IN ([1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11],[12])
+    ) AS d;
+
+    -- Join final y renombramos columnas con sufijos
+    SELECT 
+        p.departamento,
+        ISNULL(p.[1],0) AS Ene_ARS, ISNULL(d.[1],0) AS Ene_USD,
+        ISNULL(p.[2],0) AS Feb_ARS, ISNULL(d.[2],0) AS Feb_USD,
+        ISNULL(p.[3],0) AS Mar_ARS, ISNULL(d.[3],0) AS Mar_USD,
+        ISNULL(p.[4],0) AS Abr_ARS, ISNULL(d.[4],0) AS Abr_USD,
+        ISNULL(p.[5],0) AS May_ARS, ISNULL(d.[5],0) AS May_USD,
+        ISNULL(p.[6],0) AS Jun_ARS, ISNULL(d.[6],0) AS Jun_USD,
+        ISNULL(p.[7],0) AS Jul_ARS, ISNULL(d.[7],0) AS Jul_USD,
+        ISNULL(p.[8],0) AS Ago_ARS, ISNULL(d.[8],0) AS Ago_USD,
+        ISNULL(p.[9],0) AS Sep_ARS, ISNULL(d.[9],0) AS Sep_USD,
+        ISNULL(p.[10],0) AS Oct_ARS, ISNULL(d.[10],0) AS Oct_USD,
+        ISNULL(p.[11],0) AS Nov_ARS, ISNULL(d.[11],0) AS Nov_USD,
+        ISNULL(p.[12],0) AS Dic_ARS, ISNULL(d.[12],0) AS Dic_USD
+    FROM #pivot_pesos p
+    INNER JOIN #pivot_dolares d ON p.departamento = d.departamento
+    ORDER BY p.departamento;
+
+    DROP TABLE #temp;
+    DROP TABLE #pivot_pesos;
+    DROP TABLE #pivot_dolares;
 END;
+GO
+
+Select * from ##DolarHistorico
+
+EXEC dbo.sp_Reporte2_RecaudacionMensual
+    @Anio = 2024,
+    @IdConsorcio = NULL,
+    @MesInicio = 1,
+    @tipo_dolar = 'Blue';
 GO
