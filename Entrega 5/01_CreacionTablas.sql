@@ -119,7 +119,7 @@ CREATE TABLE Pago (
     id_exp_detalle INT NULL
         CONSTRAINT FK_exp_detalle FOREIGN KEY REFERENCES Expensa_Detalle(id_exp_detalle),
     fecha DATE NOT NULL,
-    cvu_cbu CHAR(20) NOT NULL,
+    cvu_cbu CHAR(22) NOT NULL,
     valor DECIMAL(10,2) NOT NULL CHECK (valor > 0),
    
 );
