@@ -73,14 +73,15 @@ ALTER TABLE Persona DROP COLUMN cbu_cvu;
 GO
 
 
-EXEC sp_rename 'Propietario.DNI_Enc', 'DNI', 'COLUMN';
-EXEC sp_rename 'Propietario.Email_Enc', 'Email', 'COLUMN';
-EXEC sp_rename 'Propietario.Telefono_Enc', 'Telefono', 'COLUMN';
-EXEC sp_rename 'Propietario.CVU_CBU_Enc', 'CVU_CBU', 'COLUMN';
+EXEC sp_rename 'Persona.DNI_Enc', 'DNI', 'COLUMN';
+EXEC sp_rename 'Persona.Email_Enc', 'Email', 'COLUMN';
+EXEC sp_rename 'Persona.Telefono_Enc', 'Telefono', 'COLUMN';
+EXEC sp_rename 'Persona.CVU_CBU_Enc', 'CVU_CBU', 'COLUMN';
 GO
 
 CLOSE SYMMETRIC KEY SK_DatosSensibles;
 GO
+
 
 
 
