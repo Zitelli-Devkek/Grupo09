@@ -74,13 +74,14 @@ GO
 
 
 EXEC sp_rename 'Persona.DNI_Enc', 'DNI', 'COLUMN';
-EXEC sp_rename 'Persona.Email_Enc', 'Email', 'COLUMN';
-EXEC sp_rename 'Persona.Telefono_Enc', 'Telefono', 'COLUMN';
-EXEC sp_rename 'Persona.CVU_CBU_Enc', 'CVU_CBU', 'COLUMN';
+EXEC sp_rename 'Persona.Email_Enc', 'email_personal', 'COLUMN';
+EXEC sp_rename 'Persona.Telefono_Enc', 'telefono', 'COLUMN';
+EXEC sp_rename 'Persona.CVU_CBU_Enc', 'cbu_cvu', 'COLUMN';
 GO
 
 CLOSE SYMMETRIC KEY SK_DatosSensibles;
 GO
+
 
 
 
