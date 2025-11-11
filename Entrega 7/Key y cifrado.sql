@@ -20,19 +20,19 @@
 
 USE Com2900G09; 
 GO
-
+IF NOT EXISTS (SELECT * FROM sys.symmetric_keys WHERE name = '##MS_DatabaseMasterKey##')
 BEGIN
     CREATE MASTER KEY ENCRYPTION BY PASSWORD = 'password09';
 END
 GO
 
-
+IF NOT EXISTS (SELECT * FROM sys.certificates WHERE name = 'Cert_DatosSensibles')
 BEGIN
     CREATE CERTIFICATE Cert_DatosSensibles WITH SUBJECT = 'Certificado para cifrado de datos personales';
 END
 GO
 
-
+IF NOT EXISTS (SELECT * FROM sys.symmetric_keys WHERE name = 'SK_DatosSensibles')
 BEGIN
     CREATE SYMMETRIC KEY SK_DatosSensibles
     ENCRYPTION BY CERTIFICATE Cert_DatosSensibles;
@@ -81,6 +81,7 @@ GO
 
 CLOSE SYMMETRIC KEY SK_DatosSensibles;
 GO
+
 
 
 
