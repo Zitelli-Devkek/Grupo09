@@ -16,7 +16,9 @@ DROP TABLE IF EXISTS Consorcio;
 CREATE TABLE Consorcio (
     id_consorcio INT IDENTITY(1,1) PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
-    cuit CHAR(11) NOT NULL UNIQUE,
+    domicilio VARCHAR(25) NOT NULL,
+    cant_uf INT CHECK (cant_uf>0),
+    m2 DECIMAL(4,2) CHECK (m2>0)
 );
 
 
