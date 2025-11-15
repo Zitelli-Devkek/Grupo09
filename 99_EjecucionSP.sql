@@ -1,20 +1,15 @@
-/*
-BASE DE DATOS APLICADA
+USE Com2900G09
 
-GRUPO 9
+--ENTREGA 5
 
-Alumnos:
-Jiménez Damián (DNI 43.194.984)
-Mendoza Gonzalo (DNI 44.597.456)
-Demis Colman (DNI 37.174.947)
-Feiertag Mateo (DNI 46.293.138)
-Suriano Lautaro (DNI 44.792.129)
-Zitelli Emanuel (DNI 45.064.107)
+EXEC sp_creacionBD
+EXEC sp_CreacionTablas
+EXEC sp_CreacionIndices
+EXEC sp_creacionTablaAPI
+EXEC sp_ActualizarDolar
 
-Llamados a los reportes*/
-USE Com2900G09;
-GO
 
+--ENTREGA 6
 -- 1) Flujo de caja semanal
 EXEC dbo.sp_Report_FlujoCajaSemanal
     @id_consorcio = 1,
@@ -27,7 +22,7 @@ EXEC dbo.sp_Reporte2_RecaudacionMensual
     @IdConsorcio = 1,
     @MesInicio = 1,
     @tipo_dolar = 'Blue';
-    
+
 -- 3) Recaudación por procedencia (Ordinario/Extra/Otro)
 EXEC dbo.sp_Report_RecaudacionPorProcedencia_Unica
     @id_consorcio = 1,

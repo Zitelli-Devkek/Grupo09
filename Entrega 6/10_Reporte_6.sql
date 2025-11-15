@@ -38,13 +38,10 @@ BEGIN
             ROW_NUMBER() OVER (PARTITION BY uf.id_uf ORDER BY p.fecha) AS rn,
             LEAD(p.fecha) OVER (PARTITION BY uf.id_uf ORDER BY p.fecha) AS fecha_siguiente
         FROM Pago p
-        INNER JOIN Persona per ON per.cbu_cvu = p.cvu_cbu
-        INNER JOIN Persona_UF puf ON puf.DNI = per.DNI
-            AND puf.fecha_inicio <= p.fecha
-            AND (puf.fecha_fin IS NULL OR puf.fecha_fin >= p.fecha)
-        INNER JOIN Unidad_Funcional uf ON uf.id_uf = puf.id_uf
-        INNER JOIN Expensa_Detalle ed ON p.id_exp_detalle = ed.id_exp_detalle
+        INNER JOIN Expensa_Detalle ed ON ed.id_exp_detalle = p.id_exp_detalle
         INNER JOIN Expensa e ON ed.id_expensa = e.id_expensa
+        INNER JOIN Consorcio c ON c.id_consorcio = e.id_consorcio
+        INNER JOIN Unidad_Funcional uf ON uf.id_consorcio = e.id_consorcio
         WHERE e.id_consorcio = @id_consorcio
           AND p.fecha BETWEEN @fecha_inicio AND @fecha_fin
           AND ISNULL(LOWER(ed.descripcion),'') NOT LIKE '%extra%'

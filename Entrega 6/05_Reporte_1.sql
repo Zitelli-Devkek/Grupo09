@@ -92,7 +92,7 @@ BEGIN
             SUM(st.total_pesos) OVER (ORDER BY st.anio, st.semana_num ROWS UNBOUNDED PRECEDING) AS acumulado_total_pesos
         FROM semana_totales st
     )
-
+    
     SELECT
         CONVERT(VARCHAR(7), anio) + '-W' + RIGHT('0' + CAST(semana_num AS VARCHAR(2)),2) AS semana,
         tipo_pago,

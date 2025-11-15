@@ -104,12 +104,3 @@ BEGIN
     DROP TABLE #pivot_dolares;
 END;
 GO
-
-Select * from ##DolarHistorico
-
-EXEC dbo.sp_Reporte2_RecaudacionMensual
-    @Anio = 2024,
-    @IdConsorcio = NULL,
-    @MesInicio = 1,
-    @tipo_dolar = 'Blue';
-GO

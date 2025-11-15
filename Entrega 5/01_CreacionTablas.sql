@@ -1,7 +1,23 @@
+/*
+BASE DE DATOS APLICADA
+
+GRUPO 9
+
+Alumnos:
+Jiménez Damián (DNI 43.194.984)
+Mendoza Gonzalo (DNI 44.597.456)
+Demis Colman (DNI 37.174.947)
+Feiertag Mateo (DNI 46.293.138)
+Suriano Lautaro (DNI 44.792.129)
+Zitelli Emanuel (DNI 45.064.107)
+
+CREACION DE LAS TABLAS PARA EL PROYECTO
+*/
+
 USE Com2900G09
 GO
 
-CREATE PROCEDURE sp_CreacionTablas
+CREATE OR ALTER PROCEDURE sp_CreacionTablas
 AS
 BEGIN
 
@@ -9,12 +25,12 @@ DROP TABLE IF EXISTS Pago;
 DROP TABLE IF EXISTS Expensa_Detalle;
 DROP TABLE IF EXISTS Factura;
 DROP TABLE IF EXISTS Proveedor;
-DROP TABLE IF EXISTS Complemento;
-DROP TABLE IF EXISTS Unidad_Funcional;
+DROP TABLE IF EXISTS Expensa;
+DROP TABLE IF EXISTS Servicio;
 DROP TABLE IF EXISTS Persona;
 DROP TABLE IF EXISTS Tipo_Ocupante;
-DROP TABLE IF EXISTS Servicio;
-DROP TABLE IF EXISTS Expensa;
+DROP TABLE IF EXISTS Complemento;
+DROP TABLE IF EXISTS Unidad_Funcional;
 DROP TABLE IF EXISTS Consorcio;
 
 
@@ -79,6 +95,8 @@ CREATE TABLE Expensa (
     id_expensa INT IDENTITY(1,1) PRIMARY KEY,
     id_consorcio INT NOT NULL
         CONSTRAINT FK_UF_Consorcio2 FOREIGN KEY REFERENCES Consorcio(id_consorcio),
+    DNI CHAR(8) NOT NULL
+        CONSTRAINT FK_Persona FOREIGN KEY REFERENCES Persona(DNI),
     mes CHAR(7) NOT NULL,
     importe_total DECIMAL(10,2) NOT NULL CHECK (importe_total >= 0),
 );
@@ -100,7 +118,7 @@ CREATE TABLE Factura (
     id_expensa INT NOT NULL
          CONSTRAINT FK_Expensa FOREIGN KEY REFERENCES Expensa(id_expensa),
     id_proveedor INT NOT NULL
-         CONSTRAINT FK_Proveedor FOREIGN KEY REFERENCES Proveedor(id_expensa),
+         CONSTRAINT FK_Proveedor FOREIGN KEY REFERENCES Proveedor(id_proveedor),
     fecha_emision DATE NOT NULL,
     fecha_vencimiento DATE NOT NULL,
     importe DECIMAL(10,2) NOT NULL,
@@ -132,3 +150,6 @@ CREATE TABLE Pago (
 
 
 END
+GO
+
+EXEC sp_creacionTablas

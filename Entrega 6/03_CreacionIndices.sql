@@ -18,12 +18,14 @@ script adicional con la generación de índices.*/
 USE Com2900G09;
 GO
 
+CREATE OR ALTER PROCEDURE sp_CreacionIndices
+AS
+BEGIN
+
 --Estos son fundamentales porque los procedimientos usan muchos JOIN entre esas tablas.
 CREATE INDEX IX_UF_id_consorcio ON Unidad_Funcional (id_consorcio);
 CREATE INDEX IX_Complemento_id_uf ON Complemento (id_uf);
 CREATE INDEX IX_Persona_id_tipo_ocupante ON Persona (id_tipo_ocupante);
-CREATE INDEX IX_PersonaUF_DNI ON Persona_UF (DNI);
-CREATE INDEX IX_PersonaUF_id_uf ON Persona_UF (id_uf);
 CREATE INDEX IX_Expensa_id_consorcio ON Expensa (id_consorcio);
 CREATE INDEX IX_Factura_id_expensa ON Factura (id_expensa);
 CREATE INDEX IX_Factura_id_servicio ON Factura (id_servicio);
@@ -48,3 +50,5 @@ CREATE INDEX IX_Expensa_id_consorcio_mes ON Expensa (id_consorcio, mes);
 
 --Mapeada por cbu_cvu y DNI en sp_Report_Top3Morosos_XML.
 CREATE INDEX IX_Persona_cbu_cvu ON Persona (cbu_cvu);
+
+END

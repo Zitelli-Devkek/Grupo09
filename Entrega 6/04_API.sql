@@ -25,6 +25,9 @@ GO
 
 -- CREACIÓN DE TABLA TEMPORAL
 
+CREATE OR ALTER PROCEDURE sp_creacionTablaAPI
+AS
+BEGIN
 IF OBJECT_ID('tempdb..##DolarHistorico') IS NOT NULL
     DROP TABLE ##DolarHistorico;
 
@@ -36,11 +39,15 @@ CREATE TABLE ##DolarHistorico (
     venta DECIMAL(10,2),
     fecha DATETIME DEFAULT GETDATE()
 );
-GO 
+END
+GO
+
+EXEC sp_creacionTablaAPI
+GO
 
 -- CREACIÓN DEL PROCEDIMIENTO 
 
-CREATE OR ALTER PROCEDURE dbo.ActualizarDolar
+CREATE OR ALTER PROCEDURE sp_ActualizarDolar
 AS
 BEGIN
     DECLARE @url NVARCHAR(256) = 'https://dolarapi.com/v1/dolares';
@@ -69,6 +76,6 @@ BEGIN
 END;
 GO
 
-EXEC dbo.ActualizarDolar;
+EXEC sp_ActualizarDolar;
 
 SELECT * FROM ##DolarHistorico ORDER BY fecha DESC;
