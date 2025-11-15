@@ -4,7 +4,7 @@ BASE DE DATOS APLICADA
 GRUPO 9
 
 Alumnos:
-Jiménez Damián (DNI 43.194.984)
+JimÃ©nez DamiÃ¡n (DNI 43.194.984)
 Mendoza Gonzalo (DNI 44.597.456)
 Demis Colman (DNI 37.174.947)
 Feiertag Mateo (DNI 46.293.138)
@@ -24,24 +24,32 @@ BEGIN
 DROP TABLE IF EXISTS Pago;
 DROP TABLE IF EXISTS Expensa_Detalle;
 DROP TABLE IF EXISTS Factura;
-DROP TABLE IF EXISTS Proveedor;
+DROP TABLE IF EXISTS Persona_UF;
+DROP TABLE IF EXISTS Complemento;
+DROP TABLE IF EXISTS Unidad_Funcional;
 DROP TABLE IF EXISTS Expensa;
 DROP TABLE IF EXISTS Servicio;
 DROP TABLE IF EXISTS Persona;
 DROP TABLE IF EXISTS Tipo_Ocupante;
-DROP TABLE IF EXISTS Complemento;
-DROP TABLE IF EXISTS Unidad_Funcional;
 DROP TABLE IF EXISTS Consorcio;
-
+DROP TABLE IF EXISTS Proveedor;
+DROP TABLE IF EXISTS ErrorLogs;
 
 CREATE TABLE Consorcio (
     id_consorcio INT IDENTITY(1,1) PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
-    cuit CHAR(11) NOT NULL UNIQUE,
-    cant_UF INT, 
-    m2 INT 
+    domicilio VARCHAR(25) NOT NULL,
+    cant_uf INT CHECK (cant_uf>0),
+    m2 INT CHECK (m2>0)
 );
 
+CREATE TABLE Proveedor (
+    id_proveedor INT IDENTITY(1,1) PRIMARY KEY,
+    nombre_consorcio VARCHAR(100) NOT NULL,
+    categoria VARCHAR(50) NOT NULL,
+    nombre_proveedor VARCHAR(100) NOT NULL,
+    detalle VARCHAR(50)
+);
 
 CREATE TABLE Unidad_Funcional ( 
     id_uf INT IDENTITY(1,1) PRIMARY KEY,
@@ -51,7 +59,7 @@ CREATE TABLE Unidad_Funcional (
     piso VARCHAR(10),
     departamento VARCHAR(10),
     coeficiente DECIMAL(4,2) NOT NULL,
-    m2 DECIMAL(4,2) NOT NULL CHECK (m2 > 0)
+    m2 INT NOT NULL CHECK (m2 > 0)
 );
 
 
@@ -82,6 +90,17 @@ CREATE TABLE Persona (
 );
 
 
+CREATE TABLE Persona_UF (
+    id_persona_uf INT IDENTITY(1,1) PRIMARY KEY,
+    DNI CHAR(8) NOT NULL
+        CONSTRAINT FK_PUF_Persona FOREIGN KEY REFERENCES Persona(DNI),
+    id_uf INT NOT NULL 
+        CONSTRAINT FK_PUF_UF FOREIGN KEY REFERENCES Unidad_Funcional(id_uf),
+    fecha_inicio DATE NOT NULL,
+    fecha_fin DATE NULL
+);
+
+
 CREATE TABLE Servicio (
     id_servicio INT IDENTITY(1,1) PRIMARY KEY,
     nro_cuenta VARCHAR(30) NOT NULL,
@@ -95,30 +114,16 @@ CREATE TABLE Expensa (
     id_expensa INT IDENTITY(1,1) PRIMARY KEY,
     id_consorcio INT NOT NULL
         CONSTRAINT FK_UF_Consorcio2 FOREIGN KEY REFERENCES Consorcio(id_consorcio),
-    DNI CHAR(8) NOT NULL
-        CONSTRAINT FK_Persona FOREIGN KEY REFERENCES Persona(DNI),
     mes CHAR(7) NOT NULL,
     importe_total DECIMAL(10,2) NOT NULL CHECK (importe_total >= 0),
 );
-
-
-CREATE TABLE Proveedor(
-    id_proveedor INT PRIMARY KEY,
-    nombre_consorcio VARCHAR(30) NOT NULL,
-    categoria VARCHAR (30) ,
-    nombre_proveedor VARCHAR (30) NOT NULL,
-    detalle VARCHAR (50) 
-);
-
 
 CREATE TABLE Factura (
     nro_factura INT IDENTITY(1,1) PRIMARY KEY,
     id_servicio INT NOT NULL
         CONSTRAINT FK_Servicio FOREIGN KEY REFERENCES Servicio(id_servicio),
     id_expensa INT NOT NULL
-         CONSTRAINT FK_Expensa FOREIGN KEY REFERENCES Expensa(id_expensa),
-    id_proveedor INT NOT NULL
-         CONSTRAINT FK_Proveedor FOREIGN KEY REFERENCES Proveedor(id_proveedor),
+         CONSTRAINT FK_ED_Exp FOREIGN KEY REFERENCES Expensa(id_expensa),
     fecha_emision DATE NOT NULL,
     fecha_vencimiento DATE NOT NULL,
     importe DECIMAL(10,2) NOT NULL,
@@ -138,6 +143,7 @@ CREATE TABLE Expensa_Detalle (
     estado VARCHAR(20) CHECK (estado IN ('Pendiente','Pagado','Vencido')),
 );
 
+
 CREATE TABLE Pago (
     id_pago INT PRIMARY KEY,
     id_exp_detalle INT NULL
@@ -148,6 +154,15 @@ CREATE TABLE Pago (
    
 );
 
+CREATE TABLE ErrorLogs (
+    id_log INT IDENTITY(1,1) PRIMARY KEY,
+    fecha DATETIME DEFAULT GETDATE(),
+    tipo_archivo VARCHAR(20),           
+    nombre_archivo VARCHAR(260),        
+    origen_sp VARCHAR(100),           
+    campo_error NVARCHAR(500),
+    error_descripcion NVARCHAR(500)
+);
 
 END
 GO
