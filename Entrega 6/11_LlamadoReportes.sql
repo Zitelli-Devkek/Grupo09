@@ -22,16 +22,11 @@ EXEC dbo.sp_Report_FlujoCajaSemanal
     @fecha_fin = '2025-10-31';
 
 -- 2) Recaudación por mes y departamento (pivot)
-EXEC dbo.sp_Report_RecaudacionMesDepartamento 
-     @anio = 2024, 
-     @id_consorcio = 2, 
-     @tipo_moneda = 'PESOS';
-
-EXEC dbo.sp_Report_RecaudacionMesDepartamento 
-     @anio = 2024, 
-     @id_consorcio = 1, 
-     @tipo_moneda = 'USD';
-
+EXEC dbo.sp_Reporte2_RecaudacionMensual 
+    @Anio = 2024,
+    @IdConsorcio = NULL,
+    @MesInicio = 1,
+    @tipo_dolar = 'Blue';
 
 -- 3) Recaudación por procedencia (Ordinario/Extra/Otro)
 EXEC dbo.sp_Report_RecaudacionPorProcedencia_Unica
