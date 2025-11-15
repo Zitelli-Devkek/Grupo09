@@ -1,22 +1,29 @@
 USE Com2900G09
 GO
 
+CREATE PROCEDURE sp_CreacionTablas
+AS
+BEGIN
+
 DROP TABLE IF EXISTS Pago;
 DROP TABLE IF EXISTS Expensa_Detalle;
 DROP TABLE IF EXISTS Factura;
-DROP TABLE IF EXISTS Persona_UF;
+DROP TABLE IF EXISTS Proveedor;
 DROP TABLE IF EXISTS Complemento;
 DROP TABLE IF EXISTS Unidad_Funcional;
-DROP TABLE IF EXISTS Expensa;
-DROP TABLE IF EXISTS Servicio;
 DROP TABLE IF EXISTS Persona;
 DROP TABLE IF EXISTS Tipo_Ocupante;
+DROP TABLE IF EXISTS Servicio;
+DROP TABLE IF EXISTS Expensa;
 DROP TABLE IF EXISTS Consorcio;
+
 
 CREATE TABLE Consorcio (
     id_consorcio INT IDENTITY(1,1) PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
     cuit CHAR(11) NOT NULL UNIQUE,
+    cant_UF INT, 
+    m2 INT 
 );
 
 
@@ -59,17 +66,6 @@ CREATE TABLE Persona (
 );
 
 
-CREATE TABLE Persona_UF (
-    id_persona_uf INT IDENTITY(1,1) PRIMARY KEY,
-    DNI CHAR(8) NOT NULL
-        CONSTRAINT FK_PUF_Persona FOREIGN KEY REFERENCES Persona(DNI),
-    id_uf INT NOT NULL 
-        CONSTRAINT FK_PUF_UF FOREIGN KEY REFERENCES Unidad_Funcional(id_uf),
-    fecha_inicio DATE NOT NULL,
-    fecha_fin DATE NULL
-);
-
-
 CREATE TABLE Servicio (
     id_servicio INT IDENTITY(1,1) PRIMARY KEY,
     nro_cuenta VARCHAR(30) NOT NULL,
@@ -87,12 +83,24 @@ CREATE TABLE Expensa (
     importe_total DECIMAL(10,2) NOT NULL CHECK (importe_total >= 0),
 );
 
+
+CREATE TABLE Proveedor(
+    id_proveedor INT PRIMARY KEY,
+    nombre_consorcio VARCHAR(30) NOT NULL,
+    categoria VARCHAR (30) ,
+    nombre_proveedor VARCHAR (30) NOT NULL,
+    detalle VARCHAR (50) 
+);
+
+
 CREATE TABLE Factura (
     nro_factura INT IDENTITY(1,1) PRIMARY KEY,
     id_servicio INT NOT NULL
         CONSTRAINT FK_Servicio FOREIGN KEY REFERENCES Servicio(id_servicio),
     id_expensa INT NOT NULL
-         CONSTRAINT FK_ED_Exp FOREIGN KEY REFERENCES Expensa(id_expensa),
+         CONSTRAINT FK_Expensa FOREIGN KEY REFERENCES Expensa(id_expensa),
+    id_proveedor INT NOT NULL
+         CONSTRAINT FK_Proveedor FOREIGN KEY REFERENCES Proveedor(id_expensa),
     fecha_emision DATE NOT NULL,
     fecha_vencimiento DATE NOT NULL,
     importe DECIMAL(10,2) NOT NULL,
@@ -112,7 +120,6 @@ CREATE TABLE Expensa_Detalle (
     estado VARCHAR(20) CHECK (estado IN ('Pendiente','Pagado','Vencido')),
 );
 
-
 CREATE TABLE Pago (
     id_pago INT PRIMARY KEY,
     id_exp_detalle INT NULL
@@ -122,3 +129,6 @@ CREATE TABLE Pago (
     valor DECIMAL(10,2) NOT NULL CHECK (valor > 0),
    
 );
+
+
+END
