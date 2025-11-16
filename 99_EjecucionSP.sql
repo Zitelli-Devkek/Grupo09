@@ -16,14 +16,14 @@ EXEC dbo.sp_Report_FlujoCajaSemanal
     @fecha_inicio = '2024-01-01',
     @fecha_fin = '2025-10-31';
 
--- 2) Recaudación por mes y departamento (pivot)
+-- 2) RecaudaciÃ³n por mes y departamento (pivot)
 EXEC dbo.sp_Reporte2_RecaudacionMensual 
     @Anio = 2025,
     @IdConsorcio = 1,
     @MesInicio = 1,
     @tipo_dolar = 'Blue';
 
--- 3) Recaudación por procedencia (Ordinario/Extra/Otro)
+-- 3) RecaudaciÃ³n por procedencia (Ordinario/Extra/Otro)
 EXEC dbo.sp_Report_RecaudacionPorProcedencia_Unica
     @id_consorcio = 1,
     @fecha_inicio = '2024-01-01',
@@ -41,7 +41,7 @@ EXEC dbo.sp_Report_Top3Morosos_XML
     @fecha_inicio = '2024-01-01',
     @fecha_fin = '2025-10-31';
 
--- 6) Pagos ordinarios por UF y días entre pagos (XML)
+-- 6) Pagos ordinarios por UF y dÃ­as entre pagos (XML)
 EXEC dbo.sp_Report_PagosOrdinariosPorUF_XML
     @id_consorcio = 1,
     @fecha_inicio = '2024-01-01',
