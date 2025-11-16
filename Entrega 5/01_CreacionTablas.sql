@@ -39,13 +39,10 @@ CREATE TABLE Consorcio (
     id_consorcio INT IDENTITY(1,1) PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
     domicilio VARCHAR(25) NOT NULL,
-    cant_uf INT CHECK (cant_uf>0),
-    m2 INT CHECK (m2>0)
 );
 
 CREATE TABLE Proveedor (
     id_proveedor INT IDENTITY(1,1) PRIMARY KEY,
-    nombre_consorcio VARCHAR(100) NOT NULL,
     categoria VARCHAR(50) NOT NULL,
     nombre_proveedor VARCHAR(100) NOT NULL,
     detalle VARCHAR(50)
