@@ -70,11 +70,12 @@ BEGIN
         -- 1. Normalizo espacios y valores de texto
         UPDATE #inquilino_propietarios_datos_tmp
         SET DNI = LTRIM(RTRIM(DNI)),
-            nombre = LTRIM(RTRIM(nombre)),
-            apellido = LTRIM(RTRIM(apellido)),
-            email_personal = LTRIM(RTRIM(email_personal)),
-            telefono = LTRIM(RTRIM(telefono)),
-            cbu_cvu = LTRIM(RTRIM(cbu_cvu));
+        nombre = dbo.fn_ProperCase(LTRIM(RTRIM(nombre))),
+        apellido = dbo.fn_ProperCase(LTRIM(RTRIM(apellido))),
+        email_personal = LOWER(LTRIM(RTRIM(email_personal))),
+        telefono = LTRIM(RTRIM(telefono)),
+        cbu_cvu = LTRIM(RTRIM(cbu_cvu));
+
 
         -- 2. Elimino registros con campos obligatorios vacíos
         DELETE FROM #inquilino_propietarios_datos_tmp
