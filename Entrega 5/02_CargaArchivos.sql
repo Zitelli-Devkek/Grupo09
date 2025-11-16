@@ -11,101 +11,94 @@ Feiertag Mateo (DNI 46.293.138)
 Suriano Lautaro (DNI 44.792.129)
 Zitelli Emanuel (DNI 45.064.107)
 
-SP para importar "datos varios.xlsx" hoja de Proveedores en la tabla Proveedor
+SP para importar "datos varios.xlsx" hoja de Consorcios en la tabla Consorcio
 */
 
 
-USE Com2900G09
-GO
-
-CREATE OR ALTER PROCEDURE sp_ImportarProveedoresDesdeExcel
-    @RutaArchivo NVARCHAR(500)
+CREATE OR ALTER PROCEDURE sp_ImportarConsorcioExcel
+    @RutaArchivo NVARCHAR(260)
 AS
 BEGIN
     SET NOCOUNT ON;
 
+    DECLARE @SQL NVARCHAR(MAX);
+
     BEGIN TRY
+        
+        --crear tabla temporal
+        IF OBJECT_ID('tempdb..#TempConsorcio') IS NOT NULL
+            DROP TABLE #TempConsorcio;
 
-        IF OBJECT_ID('tempdb..#ExcelProveedores') IS NOT NULL
-            DROP TABLE #ExcelProveedores;
-
-        CREATE TABLE #ExcelProveedores (
-            Categoria NVARCHAR(200),
-            NombreProveedor NVARCHAR(200),
-            Detalle NVARCHAR(500),
-            NombreConsorcio NVARCHAR(200)
+        CREATE TABLE #TempConsorcio (
+            NombreDelConsorcio NVARCHAR(500),
+            Domicilio NVARCHAR(500)
         );
 
-
-        DECLARE @sql NVARCHAR(MAX) = N'
-            INSERT INTO #ExcelProveedores (Categoria, NombreProveedor, Detalle, NombreConsorcio)
-            SELECT
-                F1 AS Categoria,
-                F2 AS NombreProveedor,
-                F3 AS Detalle,
-                F4 AS NombreConsorcio
+        --cargar los campos que necesito de mi excel
+        SET @SQL = N'
+            INSERT INTO #TempConsorcio (NombreDelConsorcio, Domicilio)
+            SELECT [Nombre del consorcio], Domicilio
             FROM OPENROWSET(
-                ''Microsoft.ACE.OLEDB.12.0'',
-                ''Excel 12.0;HDR=NO;Database=' + @RutaArchivo + ''',
-                ''SELECT F1,F2,F3,F4 FROM [Proveedores$]''
-            ) AS t
-            WHERE F1 IS NOT NULL OR F2 IS NOT NULL OR F4 IS NOT NULL';
-        EXEC(@sql);
+                    ''Microsoft.ACE.OLEDB.12.0'',
+                    ''Excel 12.0;HDR=YES;Database=' + @RutaArchivo + ''',
+                    ''SELECT [Nombre del consorcio], [Domicilio] FROM [Consorcios$]''
+                );
+        ';
 
+        EXEC sp_executesql @SQL;
 
+        --registtro de errores
         INSERT INTO ErrorLogs (
             tipo_archivo, nombre_archivo, origen_sp,
             campo_error, error_descripcion
         )
-        SELECT
+        SELECT 
             'EXCEL',
             @RutaArchivo,
-            'sp_ImportarProveedoresDesdeExcel',
-            -- Dato que falla
-            CASE 
-                WHEN Categoria IS NULL OR LTRIM(RTRIM(Categoria)) = '' THEN 'Categoria: ' + ISNULL(Categoria,'NULL')
-                WHEN NombreProveedor IS NULL OR LTRIM(RTRIM(NombreProveedor)) = '' THEN 'NombreProveedor: ' + ISNULL(NombreProveedor,'NULL')
-                WHEN NombreConsorcio IS NULL OR LTRIM(RTRIM(NombreConsorcio)) = '' THEN 'NombreConsorcio: ' + ISNULL(NombreConsorcio,'NULL')
+            'sp_ImportarConsorcioExcel',
+            CASE
+                WHEN NombreDelConsorcio IS NULL OR LTRIM(RTRIM(NombreDelConsorcio)) = '' 
+                    THEN 'Nombre del consorcio vacío'
+                WHEN Domicilio IS NULL OR LTRIM(RTRIM(Domicilio)) = ''
+                    THEN 'Domicilio vacío'
             END,
-            -- Descripción del error
-            CASE 
-                WHEN Categoria IS NULL OR LTRIM(RTRIM(Categoria)) = '' THEN 'Categoría vacía'
-                WHEN NombreProveedor IS NULL OR LTRIM(RTRIM(NombreProveedor)) = '' THEN 'Nombre de proveedor vacío'
-                WHEN NombreConsorcio IS NULL OR LTRIM(RTRIM(NombreConsorcio)) = '' THEN 'Consorcio vacío'
+            CASE
+                WHEN NombreDelConsorcio IS NULL OR LTRIM(RTRIM(NombreDelConsorcio)) = '' 
+                    THEN 'El nombre del consorcio no puede estar vacío'
+                WHEN Domicilio IS NULL OR LTRIM(RTRIM(Domicilio)) = ''
+                    THEN 'El domicilio no puede estar vacío'
             END
-        FROM #ExcelProveedores
+        FROM #TempConsorcio
         WHERE 
-            Categoria IS NULL OR LTRIM(RTRIM(Categoria)) = ''
-            OR NombreProveedor IS NULL OR LTRIM(RTRIM(NombreProveedor)) = ''
-            OR NombreConsorcio IS NULL OR LTRIM(RTRIM(NombreConsorcio)) = '';
+            NombreDelConsorcio IS NULL OR LTRIM(RTRIM(NombreDelConsorcio)) = ''
+            OR Domicilio IS NULL OR LTRIM(RTRIM(Domicilio)) = '';
 
-        --Inserto solo filas validas
-        INSERT INTO Proveedor (nombre_consorcio, categoria, nombre_proveedor, detalle)
+        --inserto filas validas
+        INSERT INTO Consorcio (nombre, domicilio)
         SELECT
-            NombreConsorcio,
-            Categoria,
-            NombreProveedor,
-            Detalle
-        FROM #ExcelProveedores
+            LTRIM(RTRIM(NombreDelConsorcio)),
+            LEFT(LTRIM(RTRIM(Domicilio)), 25)   --por si excede el tamaño
+        FROM #TempConsorcio
         WHERE 
-            Categoria IS NOT NULL AND LTRIM(RTRIM(Categoria)) <> ''
-            AND NombreProveedor IS NOT NULL AND LTRIM(RTRIM(NombreProveedor)) <> ''
-            AND NombreConsorcio IS NOT NULL AND LTRIM(RTRIM(NombreConsorcio)) <> '';
+            NombreDelConsorcio IS NOT NULL AND LTRIM(RTRIM(NombreDelConsorcio)) <> ''
+            AND Domicilio IS NOT NULL AND LTRIM(RTRIM(Domicilio)) <> '';
 
-        PRINT 'Importación completada correctamente.';
+        --borro tabla temp
+        DROP TABLE #TempConsorcio;
+
+        PRINT 'Importación de consorcios completada correctamente.';
 
     END TRY
     BEGIN CATCH
-
-        --Informar si hay error critico y guardarlo en el log
+        --error de sp si lo hay
         INSERT INTO ErrorLogs (
             tipo_archivo, nombre_archivo, origen_sp, campo_error, error_descripcion
         )
         VALUES (
-            'EXCEL', @RutaArchivo, 'sp_ImportarProveedoresDesdeExcel', NULL, ERROR_MESSAGE()
+            'EXCEL', @RutaArchivo, 'sp_ImportarConsorcioExcel', NULL, ERROR_MESSAGE()
         );
 
-        PRINT 'Ocurrió un error durante la importación.';
+        PRINT 'Error crítico durante la importación: ' + ERROR_MESSAGE();
     END CATCH
 END;
 GO
@@ -123,96 +116,104 @@ Feiertag Mateo (DNI 46.293.138)
 Suriano Lautaro (DNI 44.792.129)
 Zitelli Emanuel (DNI 45.064.107)
 
-SP para importar "datos varios.xlsx" hoja de Consorcios en la tabla Consorcio
+SP para importar "datos varios.xlsx" hoja de Proveedores en la tabla Proveedor
 */
 
-CREATE OR ALTER PROCEDURE sp_ImportarConsorcioExcel
-    @RutaArchivo NVARCHAR(260)
+USE Com2900G09
+GO
+
+CREATE OR ALTER PROCEDURE sp_ImportarProveedoresDesdeExcel
+    @RutaArchivo NVARCHAR(500) 
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    DECLARE @SQL NVARCHAR(MAX);
-
     BEGIN TRY
-        --creo tabla temp
-        IF OBJECT_ID('tempdb..#TempConsorcio') IS NOT NULL
-            DROP TABLE #TempConsorcio;
+        -- Eliminar la tabla temporal si ya existe
+        IF OBJECT_ID('tempdb..#ExcelProveedores') IS NOT NULL
+            DROP TABLE #ExcelProveedores;
 
-        CREATE TABLE #TempConsorcio (
-            Consorcio NVARCHAR(500),
-            NombreDelConsorcio NVARCHAR(500),
-            Domicilio NVARCHAR(500),
-            CantUnidadesFuncionales NVARCHAR(500),
-            M2Totales NVARCHAR(500)
+        -- Crear la tabla temporal para cargar los datos del Excel
+        CREATE TABLE #ExcelProveedores (
+            Categoria NVARCHAR(200),
+            NombreProveedor NVARCHAR(200),
+            Detalle NVARCHAR(500),
+            NombreConsorcio NVARCHAR(200)
         );
 
-        --Para cargar los datos del excel
-        SET @SQL = N'
-            INSERT INTO #TempConsorcio (Consorcio, NombreDelConsorcio, Domicilio, CantUnidadesFuncionales, M2Totales)
-            SELECT Consorcio, [Nombre del consorcio], Domicilio, [Cant unidades funcionales], [m2 totales]
-            FROM OPENROWSET(''Microsoft.ACE.OLEDB.12.0'',
-                            ''Excel 12.0;HDR=YES;Database=' + @RutaArchivo + ''',
-                            ''SELECT * FROM [Consorcios$]'')';
-        EXEC sp_executesql @SQL;
+        -- Cargar los datos desde el archivo Excel
+        DECLARE @sql NVARCHAR(MAX) = N'
+            INSERT INTO #ExcelProveedores (Categoria, NombreProveedor, Detalle, NombreConsorcio)
+            SELECT
+                F1 AS Categoria,
+                F2 AS NombreProveedor,
+                F3 AS Detalle,
+                F4 AS NombreConsorcio
+            FROM OPENROWSET(
+                ''Microsoft.ACE.OLEDB.12.0'',
+                ''Excel 12.0;HDR=NO;Database=' + @RutaArchivo + ''',
+                ''SELECT F1,F2,F3,F4 FROM [Proveedores$]'' 
+            ) AS t
+            WHERE F1 IS NOT NULL OR F2 IS NOT NULL OR F4 IS NOT NULL';
+        EXEC(@sql);
 
-        --Registro errores en el log
-        INSERT INTO ErrorLogs (tipo_archivo, nombre_archivo, origen_sp, campo_error, error_descripcion)
-        SELECT 
+        -- Registrar los errores de validación en la tabla ErrorLogs
+        INSERT INTO ErrorLogs (
+            tipo_archivo, nombre_archivo, origen_sp,
+            campo_error, error_descripcion
+        )
+        SELECT
             'EXCEL',
             @RutaArchivo,
-            'sp_ImportarConsorcioExcel',
-            -- Valor que falló
-            CASE
-                WHEN NombreDelConsorcio IS NULL OR LTRIM(RTRIM(NombreDelConsorcio)) = '' THEN ISNULL(NombreDelConsorcio,'NULL')
-                WHEN Domicilio IS NULL OR LTRIM(RTRIM(Domicilio)) = '' THEN ISNULL(Domicilio,'NULL')
-                WHEN ISNUMERIC(CantUnidadesFuncionales) = 0 THEN CantUnidadesFuncionales
-                WHEN ISNUMERIC(M2Totales) = 0 THEN M2Totales
-                WHEN CAST(CantUnidadesFuncionales AS INT) <= 0 THEN CantUnidadesFuncionales
-                WHEN CAST(M2Totales AS INT) <= 0 THEN M2Totales
+            'sp_ImportarProveedoresDesdeExcel',
+            CASE 
+                WHEN Categoria IS NULL OR LTRIM(RTRIM(Categoria)) = '' THEN 'Categoria: ' + ISNULL(Categoria, 'NULL')
+                WHEN NombreProveedor IS NULL OR LTRIM(RTRIM(NombreProveedor)) = '' THEN 'NombreProveedor: ' + ISNULL(NombreProveedor, 'NULL')
+                WHEN NombreConsorcio IS NULL OR LTRIM(RTRIM(NombreConsorcio)) = '' THEN 'NombreConsorcio: ' + ISNULL(NombreConsorcio, 'NULL')
             END,
-            -- Descripción del error
-            CASE
-                WHEN NombreDelConsorcio IS NULL OR LTRIM(RTRIM(NombreDelConsorcio)) = '' 
-                    OR Domicilio IS NULL OR LTRIM(RTRIM(Domicilio)) = '' THEN 'Falta nombre o domicilio'
-                WHEN ISNUMERIC(CantUnidadesFuncionales) = 0 OR ISNUMERIC(M2Totales) = 0 THEN 'CantUnidadesFuncionales o M2 no es numérico'
-                WHEN CAST(CantUnidadesFuncionales AS INT) <= 0 OR CAST(M2Totales AS INT) <= 0 THEN 'CantUnidadesFuncionales o M2 <= 0'
-                ELSE 'Error desconocido'
+            CASE 
+                WHEN Categoria IS NULL OR LTRIM(RTRIM(Categoria)) = '' THEN 'Categoría vacía'
+                WHEN NombreProveedor IS NULL OR LTRIM(RTRIM(NombreProveedor)) = '' THEN 'Nombre de proveedor vacío'
+                WHEN NombreConsorcio IS NULL OR LTRIM(RTRIM(NombreConsorcio)) = '' THEN 'Consorcio vacío'
             END
-        FROM #TempConsorcio
+        FROM #ExcelProveedores
         WHERE 
-            NombreDelConsorcio IS NULL OR LTRIM(RTRIM(NombreDelConsorcio)) = ''
-            OR Domicilio IS NULL OR LTRIM(RTRIM(Domicilio)) = ''
-            OR ISNUMERIC(CantUnidadesFuncionales) = 0
-            OR ISNUMERIC(M2Totales) = 0
-            OR CAST(CantUnidadesFuncionales AS INT) <= 0
-            OR CAST(M2Totales AS INT) <= 0;
+            Categoria IS NULL OR LTRIM(RTRIM(Categoria)) = ''
+            OR NombreProveedor IS NULL OR LTRIM(RTRIM(NombreProveedor)) = ''
+            OR NombreConsorcio IS NULL OR LTRIM(RTRIM(NombreConsorcio)) = '';
 
-        --Inserto solo filas validas
-        INSERT INTO Consorcio (nombre, domicilio, cant_uf, m2)
-        SELECT 
-            NombreDelConsorcio,
-            Domicilio,
-            CAST(CantUnidadesFuncionales AS INT),
-            CAST(M2Totales AS INT)
-        FROM #TempConsorcio
-        WHERE ISNUMERIC(CantUnidadesFuncionales) = 1
-          AND ISNUMERIC(M2Totales) = 1
-          AND CAST(CantUnidadesFuncionales AS INT) > 0
-          AND CAST(M2Totales AS INT) > 0
-          AND NombreDelConsorcio IS NOT NULL AND LTRIM(RTRIM(NombreDelConsorcio)) <> ''
-          AND Domicilio IS NOT NULL AND LTRIM(RTRIM(Domicilio)) <> '';
+        -- Insertar solo los registros válidos en la tabla Proveedor
+        INSERT INTO Proveedor (consorcio, categoria, nombre_proveedor, detalle)
+        SELECT
+            -- Buscar el id del consorcio según el nombre
+            (SELECT id_consorcio FROM Consorcio WHERE nombre = t.NombreConsorcio),
+            t.Categoria,
+            t.NombreProveedor,
+            t.Detalle
+        FROM #ExcelProveedores t
+        WHERE 
+            t.Categoria IS NOT NULL AND LTRIM(RTRIM(t.Categoria)) <> ''
+            AND t.NombreProveedor IS NOT NULL AND LTRIM(RTRIM(t.NombreProveedor)) <> ''
+            AND t.NombreConsorcio IS NOT NULL AND LTRIM(RTRIM(t.NombreConsorcio)) <> ''
+            AND EXISTS (SELECT 1 FROM Consorcio c WHERE c.nombre = t.NombreConsorcio);  -- Asegurarse de que el consorcio existe
 
-        DROP TABLE #TempConsorcio;
+        PRINT 'Importación completada correctamente.';
 
     END TRY
     BEGIN CATCH
-        -- Registrar error crítico del SP
-        INSERT INTO ErrorLogs (tipo_archivo, nombre_archivo, origen_sp, campo_error, error_descripcion)
-        VALUES ('EXCEL', @RutaArchivo, 'sp_ImportarConsorcioExcel', NULL, ERROR_MESSAGE());
+        -- En caso de error, informo
+        INSERT INTO ErrorLogs (
+            tipo_archivo, nombre_archivo, origen_sp, campo_error, error_descripcion
+        )
+        VALUES (
+            'EXCEL', @RutaArchivo, 'sp_ImportarProveedoresDesdeExcel', NULL, ERROR_MESSAGE()
+        );
+
+        PRINT 'Ocurrió un error durante la importación: ' + ERROR_MESSAGE();
     END CATCH
 END;
 GO
+
 
 /*
 BASE DE DATOS APLICADA
