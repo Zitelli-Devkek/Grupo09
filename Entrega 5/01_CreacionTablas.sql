@@ -43,6 +43,7 @@ CREATE TABLE Consorcio (
 
 CREATE TABLE Proveedor (
     id_proveedor INT IDENTITY(1,1) PRIMARY KEY,
+    ref_consorcio INT NOT NULL,
     categoria VARCHAR(50) NOT NULL,
     nombre_proveedor VARCHAR(100) NOT NULL,
     detalle VARCHAR(50)
@@ -92,15 +93,13 @@ CREATE TABLE Persona_UF (
     DNI CHAR(8) NOT NULL
         CONSTRAINT FK_PUF_Persona FOREIGN KEY REFERENCES Persona(DNI),
     id_uf INT NOT NULL 
-        CONSTRAINT FK_PUF_UF FOREIGN KEY REFERENCES Unidad_Funcional(id_uf),
-    fecha_inicio DATE NOT NULL,
-    fecha_fin DATE NULL
+        CONSTRAINT FK_PUF_UF FOREIGN KEY REFERENCES Unidad_Funcional(id_uf)
 );
 
 
 CREATE TABLE Servicio (
     id_servicio INT IDENTITY(1,1) PRIMARY KEY,
-    nro_cuenta VARCHAR(30) NOT NULL,
+    ref_consorcio INT NOT NULL,
     mes VARCHAR(20) NOT NULL,
     categoria VARCHAR(50) NOT NULL,
     valor DECIMAL (10,2) NOT NULL CHECK (valor >= 0)

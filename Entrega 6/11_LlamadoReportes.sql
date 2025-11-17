@@ -23,7 +23,7 @@ EXEC dbo.sp_Report_FlujoCajaSemanal
 
 -- 2) Recaudación por mes y departamento (pivot)
 EXEC dbo.sp_Reporte2_RecaudacionMensual 
-    @Anio = 2025,
+    @Anio = 2024,
     @IdConsorcio = 1,
     @MesInicio = 1,
     @tipo_dolar = 'Blue';

@@ -46,33 +46,34 @@ BEGIN
 
     ;WITH deuda_por_persona AS (
         -- total cargos (sum de importe_uf) asignados a cada propietario según su UF vigente
-        SELECT
-            per.DNI,
-            per.nombre,
-            per.apellido,
-            per.email_personal,
-            per.telefono,
-            SUM(ISNULL(ed.importe_uf,0)) AS total_cargos_pesos
-        FROM Persona per
-        LEFT JOIN Expensa e ON e.DNI = per.DNI
-        LEFT JOIN Expensa_Detalle ed ON ed.id_expensa = e.id_expensa
-        
-        
-        WHERE per.id_tipo_ocupante IS NOT NULL
-        GROUP BY per.DNI, per.nombre, per.apellido, per.email_personal, per.telefono
+    SELECT
+        per.DNI,
+        per.nombre,
+        per.apellido,
+        per.email_personal,
+        per.telefono,
+        SUM(ISNULL(ed.importe_uf,0)) AS total_cargos_pesos
+    FROM Persona per
+    LEFT JOIN Persona_UF puf ON puf.DNI = per.DNI
+    LEFT JOIN Unidad_Funcional uf ON uf.id_uf = puf.id_uf
+    LEFT JOIN Expensa e ON e.id_consorcio = @id_consorcio
+    LEFT JOIN Expensa_Detalle ed ON ed.id_expensa = e.id_expensa
+        AND ed.fecha_venc BETWEEN @fecha_inicio AND @fecha_fin
+    WHERE per.id_tipo_ocupante IS NOT NULL
+    GROUP BY per.DNI, per.nombre, per.apellido, per.email_personal, per.telefono 
     ),
     pagos_por_persona AS (
         -- pagos realizados por persona (mapeo por cuenta)
-        SELECT
-            per.DNI,
-            SUM(p.valor) AS total_pagos_pesos
-        FROM Pago p
-        LEFT JOIN Expensa_Detalle ed ON p.id_exp_detalle = ed.id_exp_detalle
-        LEFT JOIN Expensa e ON ed.id_expensa = e.id_expensa
-        LEFT JOIN Persona per ON per.DNI = e.DNI
-        WHERE e.id_consorcio = @id_consorcio
-          AND p.fecha BETWEEN @fecha_inicio AND @fecha_fin
-        GROUP BY per.DNI
+    SELECT
+        per.DNI,
+        SUM(p.valor) AS total_pagos_pesos
+    FROM Pago p
+    LEFT JOIN Persona per ON per.cbu_cvu = p.cvu_cbu
+    LEFT JOIN Expensa_Detalle ed ON p.id_exp_detalle = ed.id_exp_detalle
+    LEFT JOIN Expensa e ON ed.id_expensa = e.id_expensa
+    WHERE e.id_consorcio = @id_consorcio
+      AND p.fecha BETWEEN @fecha_inicio AND @fecha_fin
+    GROUP BY per.DNI 
     ),
     resumen AS (
         SELECT

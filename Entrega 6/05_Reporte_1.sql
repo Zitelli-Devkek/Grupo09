@@ -107,4 +107,3 @@ BEGIN
     ORDER BY anio, semana_num, tipo_pago;
 END
 GO
-
