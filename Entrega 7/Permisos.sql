@@ -17,28 +17,42 @@
 -- =================================================================
 */
 
-USE Com2900G09
+USE Com2900G09;
 GO
 
 -- --- CREACION ROLES ---
-
+IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'rol_administrativo_general' AND type = 'R')
+BEGIN
     CREATE ROLE rol_administrativo_general;
+END
 GO
+
+IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'rol_administrativo_bancario' AND type = 'R')
+BEGIN
     CREATE ROLE rol_administrativo_bancario;
+END
 GO
+
+IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'rol_administrativo_operativo' AND type = 'R')
+BEGIN
     CREATE ROLE rol_administrativo_operativo;
+END
 GO
+
+IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'rol_sistemas' AND type = 'R')
+BEGIN
     CREATE ROLE rol_sistemas;
+END
 GO
 
--- Rol base para reportes 
-
-    CREATE ROLE rol_reportes_lectura
+-- Rol base para reportes
+IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'rol_reportes_lectura' AND type = 'R')
+BEGIN
+    CREATE ROLE rol_reportes_lectura;
+END
 GO
 
 
-
--- ---  ASIGNACION DE PERMISOS A "rol_reportes_lectura" ---
 -- Permiso para ejecutar todos los SP de reportes
 GRANT EXECUTE ON [dbo].[rpt_FlujoCaja_Semanal] TO rol_reportes_lectura;
 GRANT EXECUTE ON [dbo].[sp_Reporte2_RecaudacionMensual] TO rol_reportes_lectura;
@@ -92,17 +106,35 @@ GO
 
 
 -- ---  (En duda) CREACION DE USUARIOS Y ASIGNACION A ROLES ---
-/*
--- Crear usuarios de base de datos 
-CREATE USER [usuario_general_1] FOR LOGIN [login_general_1];
-CREATE USER [usuario_bancario_1] FOR LOGIN [login_bancario_1];
-CREATE USER [usuario_operativo_1] FOR LOGIN [login_operativo_1];
-CREATE USER [usuario_sistemas_1] FOR LOGIN [login_sistemas_1];
 
+-- Crear usuarios de base de datos 
+IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'usuario_general_1')
+BEGIN
+    CREATE USER [usuario_general_1] FOR LOGIN [login_general_1];
+END
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'usuario_bancario_1')
+BEGIN
+    CREATE USER [usuario_bancario_1] FOR LOGIN [login_bancario_1];
+END
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'usuario_operativo_1')
+BEGIN
+    CREATE USER [usuario_operativo_1] FOR LOGIN [login_operativo_1];
+END
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'usuario_sistemas_1')
+BEGIN
+    CREATE USER [usuario_sistemas_1] FOR LOGIN [login_sistemas_1];
+END
+GO
 -- Asignar usuarios a roles
 ALTER ROLE rol_administrativo_general ADD MEMBER [usuario_general_1];
 ALTER ROLE rol_administrativo_bancario ADD MEMBER [usuario_bancario_1];
 ALTER ROLE rol_administrativo_operativo ADD MEMBER [usuario_operativo_1];
 ALTER ROLE rol_sistemas ADD MEMBER [usuario_sistemas_1];
 
-*/
+
