@@ -107,7 +107,6 @@ GO
 
 -- ---  (En duda) CREACION DE USUARIOS Y ASIGNACION A ROLES ---
 
--- Crear usuarios de base de datos 
 IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'usuario_general_1')
 BEGIN
     CREATE USER [usuario_general_1] FOR LOGIN [login_general_1];
