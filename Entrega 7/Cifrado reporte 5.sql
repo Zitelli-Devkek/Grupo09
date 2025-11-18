@@ -68,7 +68,7 @@ BEGIN
                 SUM(p.valor) AS total_pagos_pesos
             FROM Pago p
             
-            -- MODIFICACIÓN ENTREGA 7: Descifrar 'cbu_cvu' para el JOIN
+            --  Descifrar 'cbu_cvu' para el JOIN
             LEFT JOIN Persona per 
                 ON CONVERT(VARCHAR, DECRYPTBYKEY(per.cbu_cvu)) = p.cvu_cbu
                 
@@ -90,7 +90,7 @@ BEGIN
             FROM deuda_por_persona d
             LEFT JOIN pagos_por_persona pp ON pp.DNI = d.DNI -- (Este JOIN es VARBINARY = VARBINARY, está OK)
         )
-        -- MODIFICACIÓN ENTREGA 7: Descifrar los datos en el SELECT final
+        --  Descifrar los datos en el SELECT final
         SELECT TOP 3
             CONVERT(VARCHAR, DECRYPTBYKEY(DNI)) AS DNI,
             nombre,
