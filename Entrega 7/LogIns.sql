@@ -61,3 +61,6 @@ BEGIN
     CREATE USER [usuario_sistemas_1] FOR LOGIN [login_sistemas_1];
 END
 GO
+
+END;
+GO
