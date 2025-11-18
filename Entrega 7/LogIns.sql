@@ -22,6 +22,6 @@ GO
 
 IF NOT EXISTS (SELECT * FROM sys.server_principals WHERE name = 'login_sistemas_1')
 BEGIN
-    CREATE LOGIN [login_bancario_1] WITH PASSWORD = N'password_sistemas';
+    CREATE LOGIN [login_sistemas_1] WITH PASSWORD = N'password_sistemas';
 END
 GO
