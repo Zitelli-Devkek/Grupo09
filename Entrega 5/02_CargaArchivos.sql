@@ -283,9 +283,6 @@ Zitelli Emanuel (DNI 45.064.107)
 SP para importar "UF por consorcio.txt" en las tablas unidad_funcional y complemento
 */
 
-USE Com2900G09
-GO
-
 CREATE OR ALTER PROCEDURE sp_Importar_UF_Complemento
     @RutaArchivo NVARCHAR(500)
 AS
@@ -953,35 +950,57 @@ Zitelli Emanuel (DNI 45.064.107)
 SP para lote de prueba tabla Expensa
 */
 
-
-USE Com2900G09
-GO
-
 CREATE OR ALTER PROCEDURE sp_lote_expensas
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    /*
-       Genera una expensa por cada combinación de:
-       - Consorcio
-       - Mes existente en Servicio
-       Y asigna un importe base entre 150k y 250k
-    */
+    DECLARE @min_importe DECIMAL(10,2) = 0;--lo tomo de factura
+    DECLARE @max_importe DECIMAL(10,2) = 0;
 
-    DECLARE @min_importe DECIMAL(10,2) = 150000;
-    DECLARE @max_importe DECIMAL(10,2) = 250000;
-
+    --expensas ordinarias: una por consorcio y mes de servicios
     INSERT INTO Expensa (id_consorcio, mes, importe_total)
     SELECT 
         s.ref_consorcio,
         s.mes,
-        @min_importe +
-        (ABS(CHECKSUM(NEWID())) % (CAST(@max_importe - @min_importe AS INT)))
+        SUM(s.valor) AS importe_total
     FROM Servicio s
     GROUP BY s.ref_consorcio, s.mes;
+
+
+    --expensa extraordinaria: sumar facturas del mes más reciente de cada consorcio
+    ;WITH recent_month AS (
+        SELECT 
+            s.ref_consorcio,
+            MAX(FORMAT(f.fecha_emision,'yyyy-MM')) AS mes_reciente
+        FROM Factura f
+        INNER JOIN Servicio s ON f.id_servicio = s.id_servicio
+        GROUP BY s.ref_consorcio
+    ),
+    total_mes_reciente AS (
+        SELECT 
+            s.ref_consorcio,
+            SUM(f.importe) AS total_mes
+        FROM Factura f
+        INNER JOIN Servicio s ON f.id_servicio = s.id_servicio
+        INNER JOIN recent_month rm 
+            ON rm.ref_consorcio = s.ref_consorcio
+           AND FORMAT(f.fecha_emision,'yyyy-MM') = rm.mes_reciente
+        GROUP BY s.ref_consorcio
+    )
+    INSERT INTO Expensa (id_consorcio, mes, importe_total)
+    SELECT 
+        tm.ref_consorcio,
+        rm.mes_reciente + '-Extra' AS mes,
+        tm.total_mes
+    FROM total_mes_reciente tm
+    INNER JOIN recent_month rm 
+        ON rm.ref_consorcio = tm.ref_consorcio;
+
+    PRINT 'Expensas generadas correctamente (ordinarias y extraordinarias).';
 END
 GO
+
 
 /*
 BASE DE DATOS APLICADA
@@ -1000,21 +1019,11 @@ SP para lote de prueba de tabla Factura
 */
 
 
-USE Com2900G09
-GO
-
 CREATE OR ALTER PROCEDURE sp_generar_facturas_prueba
 AS
 BEGIN
     SET NOCOUNT ON;
-
-    /*
-        Genera las facturas basado en los servicios cargados.
-        Luego actualiza la tabla Expensa sumando todos
-        los importes facturados.
-    */
-
-    ------------------------------------
+ ------------------------------------
     -- 1) Insertar facturas
     ------------------------------------
     INSERT INTO Factura (id_servicio, id_expensa, fecha_emision, fecha_vencimiento, importe, detalle)
@@ -1028,7 +1037,7 @@ BEGIN
     FROM Servicio s
     INNER JOIN Expensa e
         ON e.id_consorcio = s.ref_consorcio
-        AND e.mes = s.mes;   -- 🔥 ahora coincide con los valores reales
+        AND e.mes = s.mes;   
 
 
     ------------------------------------
@@ -1046,6 +1055,7 @@ BEGIN
 END
 GO
 
+
 /*
 BASE DE DATOS APLICADA
 
@@ -1062,33 +1072,60 @@ Zitelli Emanuel (DNI 45.064.107)
 SP para generar lote de prueba a expensa_detalle
 */
 
+/*
+BASE DE DATOS APLICADA
 
+GRUPO 9
 
-CREATE OR ALTER PROCEDURE sp_generar_expensa_detalle_prueba
+Alumnos:
+Jiménez Damián (DNI 43.194.984)
+Mendoza Gonzalo (DNI 44.597.456)
+Demis Colman (DNI 37.174.947)
+Feiertag Mateo (DNI 46.293.138)
+Suriano Lautaro (DNI 44.792.129)
+Zitelli Emanuel (DNI 45.064.107)
+
+sp para generar lote en expensa_detalle
+*/
+
+CREATE OR ALTER PROCEDURE sp_CargarExpensaDetalle
 AS
 BEGIN
     SET NOCOUNT ON;
 
     DECLARE @fecha_base DATE = GETDATE();
 
+    --inserto detalles
     INSERT INTO Expensa_Detalle 
         (id_expensa, nro_cuota, total_cuotas, descripcion, fecha_venc, importe_uf, estado)
     SELECT
         e.id_expensa,
         d.nro_cuota,
         d.total_cuotas,
-        'Expensa mensual - cuota ' + CAST(d.nro_cuota AS VARCHAR) + ' de ' + CAST(d.total_cuotas AS VARCHAR),
-        -- Fecha de vencimiento: 10 de cada mes, sumando nro_cuota-1 meses
-        DATEADD(MONTH, d.nro_cuota - 1, DATEFROMPARTS(YEAR(@fecha_base), MONTH(@fecha_base), 10)),
-        ROUND(e.importe_total / d.total_cuotas, 2),
+        CONCAT('UF ', uf.id_uf, ' - cuota ', d.nro_cuota, ' de ', d.total_cuotas),
+        
+        -- fecha de vencimiento la calculo a partir de: 10 del mes base + nro_cuota - 1 meses
+        DATEADD(MONTH, d.nro_cuota - 1,
+            DATEFROMPARTS(YEAR(@fecha_base), MONTH(@fecha_base), 10)
+        ),
+
+        -- importe proporcional por coeficiente de UF y número de cuotas
+        CAST( (e.importe_total * (uf.coeficiente / 100.0)) / d.total_cuotas AS DECIMAL(10,2)),
+
+        --que ponga en el estado 'Vencido' si la fecha de vencimiento ya pasó, 'Pendiente' si no
         CASE 
-            WHEN DATEADD(MONTH, d.nro_cuota - 1, DATEFROMPARTS(YEAR(@fecha_base), MONTH(@fecha_base), 10)) < CAST(GETDATE() AS DATE)
+            WHEN DATEADD(MONTH, d.nro_cuota - 1,
+                DATEFROMPARTS(YEAR(@fecha_base), MONTH(@fecha_base), 10)
+            ) < CAST(GETDATE() AS DATE)
                 THEN 'Vencido'
             ELSE 'Pendiente'
         END
     FROM Expensa e
+    INNER JOIN Unidad_Funcional uf
+        ON uf.id_consorcio = e.id_consorcio
+
     CROSS APPLY (
-        -- Generar total de cuotas (1, 3 o 6) de manera aleatoria
+        --cantidad de cuotas aleatoria hasta 6
         SELECT 
             CASE ABS(CHECKSUM(NEWID())) % 3
                 WHEN 0 THEN 1
@@ -1096,14 +1133,149 @@ BEGIN
                 WHEN 2 THEN 6
             END AS total_cuotas
     ) tc
+
     CROSS APPLY (
-        -- Generar una fila por cada cuota
+        --genero 1 fila por cuota con la division segun la cantidad ya establecida
         SELECT 
             ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS nro_cuota,
             tc.total_cuotas
         FROM master.dbo.spt_values
         WHERE type = 'P' AND number BETWEEN 1 AND tc.total_cuotas
     ) d;
+
+    PRINT 'Expensa_Detalle generados correctamente.';
 END
+GO
+
+/*
+BASE DE DATOS APLICADA
+
+GRUPO 9
+
+Alumnos:
+Jiménez Damián (DNI 43.194.984)
+Mendoza Gonzalo (DNI 44.597.456)
+Demis Colman (DNI 37.174.947)
+Feiertag Mateo (DNI 46.293.138)
+Suriano Lautaro (DNI 44.792.129)
+Zitelli Emanuel (DNI 45.064.107)
+
+sp para importar "pagos_consorcio.csv" en la tabla de Pago referenciadolo con su respectiva expensa_detalle por id
+*/
+
+
+CREATE OR ALTER PROCEDURE sp_importar_pagos_csv
+    @RutaArchivo NVARCHAR(500)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        --cargo csv en tabla temporal
+        IF OBJECT_ID('tempdb..#Pagostemp') IS NOT NULL DROP TABLE #Pagostemp;
+        CREATE TABLE #Pagostemp (
+            id_pago_temp VARCHAR(50),
+            fecha_temp   VARCHAR(50),
+            cvu_temp     VARCHAR(50),
+            valor_temp   VARCHAR(100)
+        );
+
+        DECLARE @SQL NVARCHAR(MAX) = '
+        BULK INSERT #Pagostemp
+        FROM ''' + @RutaArchivo + '''
+        WITH (
+            FIELDTERMINATOR = '','',
+            ROWTERMINATOR = ''\n'',
+            FIRSTROW = 2,
+            CODEPAGE = ''ACP''
+        );';
+        EXEC sp_executesql @SQL;
+
+        --normalización de datos
+        IF OBJECT_ID('tempdb..#Pagos') IS NOT NULL DROP TABLE #Pagos;
+        CREATE TABLE #Pagos (
+            id_pago INT,
+            fecha DATE,
+            cvu CHAR(22),
+            valor DECIMAL(18,2),
+            error_desc NVARCHAR(500) NULL
+        );
+
+        INSERT INTO #Pagos (id_pago, fecha, cvu, valor)
+        SELECT
+            TRY_CAST(id_pago_temp AS INT) AS id_pago,
+            TRY_CONVERT(DATE, fecha_temp, 103) AS fecha,
+            RIGHT(REPLICATE('0',22) + LTRIM(RTRIM(cvu_temp)), 22) AS cvu,
+            TRY_CAST(REPLACE(REPLACE(REPLACE(LTRIM(RTRIM(valor_temp)),'$',''),'.',''),',','.') AS DECIMAL(18,2)) AS valor
+        FROM #Pagostemp;
+
+        --registrar errores de validación en errorlog
+        INSERT INTO ErrorLogs (fecha, tipo_archivo, nombre_archivo, origen_sp, campo_error, error_descripcion)
+        SELECT 
+            GETDATE(),
+            'Pago',
+            @RutaArchivo,
+            'sp_importar_pagos_csv',
+            'GENERAL',
+            CASE 
+                WHEN id_pago IS NULL THEN 'Id_pago no convertible a INT'
+                WHEN fecha IS NULL THEN 'Fecha inválida o nula'
+                WHEN LEN(cvu) <> 22 THEN 'CVU inválido'
+                WHEN valor IS NULL OR valor <= 0 THEN 'Valor inválido'
+                WHEN EXISTS (SELECT 1 FROM Pago WHERE id_pago = #Pagos.id_pago) THEN 'Id_pago duplicado'
+                ELSE 'Error desconocido'
+            END
+        FROM #Pagos
+        WHERE id_pago IS NULL
+           OR fecha IS NULL
+           OR LEN(cvu) <> 22
+           OR valor IS NULL
+           OR valor <= 0
+           OR EXISTS (SELECT 1 FROM Pago WHERE id_pago = #Pagos.id_pago);
+
+        --inserto solo datos validos
+        INSERT INTO Pago (id_pago, id_exp_detalle, fecha, cvu_cbu, valor)
+        SELECT
+            p.id_pago,
+            ed.id_exp_detalle,
+            p.fecha,
+            p.cvu,
+            p.valor
+        FROM #Pagos p
+        INNER JOIN Persona_UF pu ON pu.DNI = (SELECT DNI FROM Persona WHERE cbu_cvu = p.cvu)
+        INNER JOIN Unidad_Funcional uf ON uf.id_uf = pu.id_uf
+        INNER JOIN Expensa e ON e.id_consorcio = uf.id_consorcio
+                             AND e.mes = FORMAT(p.fecha,'MMMM','es-es')
+        INNER JOIN Expensa_Detalle ed ON ed.id_expensa = e.id_expensa
+                                      AND ed.estado IN ('Pendiente','Vencido')
+        CROSS APPLY (
+            SELECT TOP 1 id_exp_detalle
+            FROM Expensa_Detalle ed2
+            WHERE ed2.id_expensa = e.id_expensa
+              AND ed2.estado IN ('Pendiente','Vencido')
+            ORDER BY ed2.id_exp_detalle
+        ) AS ca
+        WHERE ed.id_exp_detalle = ca.id_exp_detalle
+          AND p.id_pago IS NOT NULL
+          AND p.fecha IS NOT NULL
+          AND LEN(p.cvu) = 22
+          AND p.valor IS NOT NULL
+          AND p.valor > 0
+          AND NOT EXISTS (SELECT 1 FROM Pago WHERE id_pago = p.id_pago);
+
+        COMMIT TRANSACTION;
+
+        PRINT 'Importación finalizada con éxito, todos los errores registrados en ErrorLogs.';
+
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        INSERT INTO ErrorLogs (fecha, tipo_archivo, nombre_archivo, origen_sp, campo_error, error_descripcion)
+        VALUES (GETDATE(), 'Pago', @RutaArchivo, 'sp_importar_pagos_csv', 'GENERAL', ERROR_MESSAGE());
+        THROW;
+    END CATCH
+END;
 GO
 
