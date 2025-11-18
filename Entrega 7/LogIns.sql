@@ -1,4 +1,7 @@
 -- Esto se ejecuta en la base de datos 'master'
+
+CREATE OR ALTER PROCEDURE dbo.sp_logins_users
+
 USE master; 
 GO
 
