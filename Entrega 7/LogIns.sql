@@ -1,5 +1,6 @@
--- Esto se ejecuta en la base de datos 'master'  o a nivel de Servidor 
-
+-- Esto se ejecuta en la base de datos 'master'
+USE master; 
+GO
 
 IF NOT EXISTS (SELECT * FROM sys.server_principals WHERE name = 'login_general_1')
 BEGIN
