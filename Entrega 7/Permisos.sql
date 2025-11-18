@@ -54,7 +54,7 @@ GO
 
 
 -- Permiso para ejecutar todos los SP de reportes
-GRANT EXECUTE ON [dbo].[rpt_FlujoCaja_Semanal] TO rol_reportes_lectura;
+GRANT EXECUTE ON [dbo].[sp_Report_FlujoCajaSemanal] TO rol_reportes_lectura;
 GRANT EXECUTE ON [dbo].[sp_Reporte2_RecaudacionMensual] TO rol_reportes_lectura;
 GRANT EXECUTE ON [dbo].[sp_Report_RecaudacionPorProcedencia_Unica] TO rol_reportes_lectura;
 GRANT EXECUTE ON [dbo].[sp_Report_Top5GastosIngresos] TO rol_reportes_lectura;
