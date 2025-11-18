@@ -11,8 +11,12 @@ Feiertag Mateo (DNI 46.293.138)
 Suriano Lautaro (DNI 44.792.129)
 Zitelli Emanuel (DNI 45.064.107)
 
-SP para importar "datos varios.xlsx" hoja de Consorcios en la tabla Consorcio
+CREACION DE SP PARA IMPORTAR A TABLAS
 */
+
+/********************************************************************
+SP para importar "datos varios.xlsx" hoja de Consorcios en la tabla Consorcio
+*********************************************************************/
 
 CREATE OR ALTER PROCEDURE sp_ImportarConsorcioExcel
     @RutaArchivo NVARCHAR(260)
@@ -46,9 +50,7 @@ BEGIN
 
         EXEC sp_executesql @SQL;
 
-        ---------------------------------------------------------------------
-        -- registro de errores → campos vacíos
-        ---------------------------------------------------------------------
+        --registro campos vacios si hay en errorlogs
         INSERT INTO ErrorLogs (
             tipo_archivo, nombre_archivo, origen_sp,
             campo_error, error_descripcion
@@ -74,9 +76,7 @@ BEGIN
             NombreDelConsorcio IS NULL OR LTRIM(RTRIM(NombreDelConsorcio)) = ''
             OR Domicilio IS NULL OR LTRIM(RTRIM(Domicilio)) = '';
 
-        ---------------------------------------------------------------------
-        -- registro de errores → duplicados en Consorcio
-        ---------------------------------------------------------------------
+        --registro en errorlogs consorcios duplicados si hubiera
         INSERT INTO ErrorLogs (
             tipo_archivo, nombre_archivo, origen_sp,
             campo_error, error_descripcion
@@ -98,9 +98,7 @@ BEGIN
             t.NombreDelConsorcio IS NOT NULL
             AND LTRIM(RTRIM(t.NombreDelConsorcio)) <> '';
 
-        ---------------------------------------------------------------------
-        -- insertar filas válidas (no vacías y no duplicadas)
-        ---------------------------------------------------------------------
+        --inserto filas validas en mi tabla Consorcio
         INSERT INTO Consorcio (nombre, domicilio)
         SELECT
             LTRIM(RTRIM(t.NombreDelConsorcio)),
@@ -125,37 +123,14 @@ BEGIN
     END TRY
     BEGIN CATCH
         --error de sp si lo hay
-        INSERT INTO ErrorLogs (
-            tipo_archivo, nombre_archivo, origen_sp, campo_error, error_descripcion
-        )
-        VALUES (
-            'EXCEL', @RutaArchivo, 'sp_ImportarConsorcioExcel', NULL, ERROR_MESSAGE()
-        );
-
         PRINT 'Error crítico durante la importación: ' + ERROR_MESSAGE();
     END CATCH
 END;
 GO
 
-
-/*
-BASE DE DATOS APLICADA
-
-GRUPO 9
-
-Alumnos:
-Jiménez Damián (DNI 43.194.984)
-Mendoza Gonzalo (DNI 44.597.456)
-Demis Colman (DNI 37.174.947)
-Feiertag Mateo (DNI 46.293.138)
-Suriano Lautaro (DNI 44.792.129)
-Zitelli Emanuel (DNI 45.064.107)
-
+/********************************************************************
 SP para importar "datos varios.xlsx" hoja de Proveedores en la tabla Proveedor
-*/
-
-USE Com2900G09
-GO
+*********************************************************************/
 
 CREATE OR ALTER PROCEDURE sp_ImportarProveedoresDesdeExcel
     @RutaArchivo NVARCHAR(500)
@@ -243,10 +218,7 @@ BEGIN
         
         DECLARE @ErrorMessage NVARCHAR(4000) = ERROR_MESSAGE();
 
-        -------------------------------------------------------------
-        -- EVITAR registrar errores falsos del proveedor ACE.OLEDB
-        -- Son errores internos que NO afectan la importación real
-        -------------------------------------------------------------
+        --esto lo busqué porque me importaba errores del ACEOLDB por mas que importase el archivo
         IF @ErrorMessage NOT LIKE '%Microsoft.ACE.OLEDB.12.0%'
            AND @ErrorMessage NOT LIKE '%No se puede inicializar el objeto%'
            AND @ErrorMessage NOT LIKE '%The Microsoft Access database engine%'
@@ -267,21 +239,9 @@ END;
 GO
 
 
-/*
-BASE DE DATOS APLICADA
-
-GRUPO 9
-
-Alumnos:
-Jiménez Damián (DNI 43.194.984)
-Mendoza Gonzalo (DNI 44.597.456)
-Demis Colman (DNI 37.174.947)
-Feiertag Mateo (DNI 46.293.138)
-Suriano Lautaro (DNI 44.792.129)
-Zitelli Emanuel (DNI 45.064.107)
-
+/********************************************************************
 SP para importar "UF por consorcio.txt" en las tablas unidad_funcional y complemento
-*/
+*********************************************************************/
 
 CREATE OR ALTER PROCEDURE sp_Importar_UF_Complemento
     @RutaArchivo NVARCHAR(500)
@@ -422,23 +382,12 @@ BEGIN
         VALUES ('TXT', @RutaArchivo, 'sp_Importar_UF_Complemento', NULL, ERROR_MESSAGE());
     END CATCH
 END;
+GO
 
-/*
-BASE DE DATOS APLICADA
 
-GRUPO 9
-
-Alumnos:
-Jiménez Damián (DNI 43.194.984)
-Mendoza Gonzalo (DNI 44.597.456)
-Demis Colman (DNI 37.174.947)
-Feiertag Mateo (DNI 46.293.138)
-Suriano Lautaro (DNI 44.792.129)
-Zitelli Emanuel (DNI 45.064.107)
-
-Consigna: En este script se importa el archivo inquilino-propietarios-datos.csv 
-y se carga en las tablas "Tipo_Ocupante" y "Persona"
-*/
+/********************************************************************
+Consigna: En este script se importa el archivo inquilino-propietarios-datos.csv y se carga en las tablas "Tipo_Ocupante" y "Persona"
+*********************************************************************/
 
 CREATE OR ALTER PROCEDURE sp_importar_csv_inquilino_propietarios_datos
     @rutaArchivo NVARCHAR(500)
@@ -446,68 +395,85 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    --borro tablas temps si existen
-    IF OBJECT_ID('tempdb..#tmp_import') IS NOT NULL DROP TABLE #tmp_import;
-    IF OBJECT_ID('tempdb..#tmp_validos') IS NOT NULL DROP TABLE #tmp_validos;
-    IF OBJECT_ID('tempdb..#tmp_dup') IS NOT NULL DROP TABLE #tmp_dup;
+    -- Si existe la tabla temporal la elimino. Para que no tire error al ejecutar dos veces
+    IF OBJECT_ID('tempdb..#inquilino_propietarios_datos_tmp') IS NOT NULL
+        DROP TABLE #inquilino_propietarios_datos_tmp;
 
-    --creo tabla temp_import con todo nvarchar por los formatos
-    CREATE TABLE #tmp_import (
-        nombre NVARCHAR(200),
-        apellido NVARCHAR(200),
+    IF OBJECT_ID('tempdb..#tmp_validos') IS NOT NULL 
+        DROP TABLE #tmp_validos;
+
+    IF OBJECT_ID('tempdb..#tmp_dup') IS NOT NULL 
+        DROP TABLE #tmp_dup;
+
+    -- Creo tabla temporal
+    CREATE TABLE #inquilino_propietarios_datos_tmp (
+        nombre NVARCHAR(100),
+        apellido NVARCHAR(100),
         DNI NVARCHAR(50),
-        email_personal NVARCHAR(200),
+        email_personal NVARCHAR(100),
         telefono NVARCHAR(50),
-        cbu_cvu NVARCHAR(50),
+        cbu_cvu NVARCHAR(22),
         inquilino NVARCHAR(10)
     );
 
+    -- Me fijo si existe el archivo a importar
+    DECLARE @existe INT;
+    EXEC master.dbo.xp_fileexist @rutaArchivo, @existe OUTPUT;
 
+    IF @existe = 0
+    BEGIN
+        RAISERROR('Escribiste mal la ruta, o el archivo no existe.', 16, 1);
+        RETURN;
+    END
+
+    -- Inicio una transacción. O cargamos todo o no cargamos nada
     BEGIN TRY
-        --sql dinamico porque mando el archivo por parametro
-        DECLARE @sql NVARCHAR(MAX) = N'
-            BULK INSERT #tmp_import
-            FROM ''' + REPLACE(@rutaArchivo,'''','''''') + N'''
+        BEGIN TRAN;
+
+        DECLARE @sql NVARCHAR(MAX);
+        SET @sql = N'
+            BULK INSERT #inquilino_propietarios_datos_tmp
+            FROM ''' + @rutaArchivo + N'''
             WITH (
                 FIRSTROW = 2,
                 FIELDTERMINATOR = '';'',
                 ROWTERMINATOR = ''\n'',
                 CODEPAGE = ''ACP''
-            );';
+            );
+        ';
         EXEC sp_executesql @sql;
-
-        --normalizo con ltrim, rtrim y lower
-        UPDATE #tmp_import
-        SET
-            nombre = LOWER(LTRIM(RTRIM(nombre))),
-            apellido = LOWER(LTRIM(RTRIM(apellido))),
-            DNI = LTRIM(RTRIM(DNI)),
-            email_personal = LTRIM(RTRIM(email_personal)),
-            telefono = LTRIM(RTRIM(telefono)),
-            cbu_cvu = LTRIM(RTRIM(cbu_cvu)),
-            inquilino = LTRIM(RTRIM(inquilino));
-
-        --reviso que existan los tipos de ocupantes
+       
+        -- Hago una carga de los roles inquilino y propietario en Tipo_Ocupante
         IF NOT EXISTS (SELECT 1 FROM Tipo_Ocupante WHERE descripcion = 'Inquilino')
             INSERT INTO Tipo_Ocupante(descripcion) VALUES('Inquilino');
+
         IF NOT EXISTS (SELECT 1 FROM Tipo_Ocupante WHERE descripcion = 'Propietario')
             INSERT INTO Tipo_Ocupante(descripcion) VALUES('Propietario');
 
         DECLARE @id_inquilino INT = (SELECT id_tipo_ocupante FROM Tipo_Ocupante WHERE descripcion = 'Inquilino');
         DECLARE @id_propietario INT = (SELECT id_tipo_ocupante FROM Tipo_Ocupante WHERE descripcion = 'Propietario');
 
-        --guardo dni duplicados en una tabla temp_dup
+        --Guardo dni duplicados en una tabla temp_dup
         SELECT DNI
         INTO #tmp_dup
         FROM (
             SELECT DNI, COUNT(*) AS cnt
-            FROM #tmp_import
+            FROM #inquilino_propietarios_datos_tmp
             WHERE DNI IS NOT NULL AND LTRIM(RTRIM(DNI)) <> ''
             GROUP BY DNI
             HAVING COUNT(*) > 1
         ) d;
 
-        --registro los duplicados en mi errorlog
+        -- Normalizo espacios y valores de texto de la tabla a la que cargamos el import
+        UPDATE #inquilino_propietarios_datos_tmp
+        SET DNI = LTRIM(RTRIM(DNI)),
+        nombre = LOWER(LTRIM(RTRIM(nombre))),
+        apellido = LOWER(LTRIM(RTRIM(apellido))),
+        email_personal = LOWER(LTRIM(RTRIM(email_personal))),
+        telefono = LTRIM(RTRIM(telefono)),
+        cbu_cvu = LTRIM(RTRIM(cbu_cvu));
+
+         --registro los duplicados en mi errorlog
         INSERT INTO ErrorLogs (tipo_archivo, nombre_archivo, origen_sp, campo_error, error_descripcion)
         SELECT
             'CSV',
@@ -527,7 +493,7 @@ BEGIN
             'DNI duplicado en tabla Persona: ' + t.DNI
         FROM (
             SELECT DISTINCT LTRIM(RTRIM(DNI)) AS DNI
-            FROM #tmp_import
+            FROM #inquilino_propietarios_datos_tmp
             WHERE DNI IS NOT NULL AND LTRIM(RTRIM(DNI)) <> ''
         ) t
         WHERE EXISTS (SELECT 1 FROM Persona p WHERE p.DNI = TRY_CONVERT(CHAR(8), t.DNI));
@@ -540,7 +506,7 @@ BEGIN
             'sp_importar_csv_inquilino_propietarios_datos',
             'DNI',
             'DNI vacío o fuera de rango (debe tener 8 dígitos): ' + ISNULL(DNI,'<NULL>')
-        FROM #tmp_import
+        FROM #inquilino_propietarios_datos_tmp
         WHERE DNI IS NULL OR LEN(DNI) <> 8 OR TRY_CONVERT(INT, DNI) NOT BETWEEN 10000000 AND 99999999;
 
         --registro en errorlog cbu_cvu con digitos fuera de rango
@@ -551,7 +517,7 @@ BEGIN
             'sp_importar_csv_inquilino_propietarios_datos',
             'CBU/CVU',
             'CBU/CVU inválido (debe tener 22 dígitos): ' + ISNULL(cbu_cvu,'<NULL>')
-        FROM #tmp_import
+        FROM #inquilino_propietarios_datos_tmp
         WHERE cbu_cvu IS NOT NULL AND LTRIM(RTRIM(cbu_cvu)) <> '' AND LEN(REPLACE(cbu_cvu,' ','') ) <> 22;
 
        --registro en error log inquilinos invalidos
@@ -559,7 +525,7 @@ BEGIN
         SELECT
             'CSV', @rutaArchivo, 'sp_importar_csv_inquilino_propietarios_datos',
             'Inquilino', 'Valor inquilino inválido (debe ser 0 o 1): ' + ISNULL(inquilino,'<NULL>')
-        FROM #tmp_import
+        FROM #inquilino_propietarios_datos_tmp
         WHERE TRY_CONVERT(INT, inquilino) NOT IN (0,1);
 
         --registro nombres o apellidos vacios en errorlog
@@ -568,110 +534,250 @@ BEGIN
             'CSV', @rutaArchivo, 'sp_importar_csv_inquilino_propietarios_datos',
             CASE WHEN nombre IS NULL OR nombre = '' THEN 'Nombre' ELSE 'Apellido' END,
             CASE WHEN nombre IS NULL OR nombre = '' THEN 'Nombre vacío' ELSE 'Apellido vacío' END
-        FROM #tmp_import
+        FROM #inquilino_propietarios_datos_tmp
         WHERE nombre IS NULL OR nombre = '' OR apellido IS NULL OR apellido = '';
+  
 
         --registro en errorlog mails invalidos
         INSERT INTO ErrorLogs (tipo_archivo, nombre_archivo, origen_sp, campo_error, error_descripcion)
         SELECT
             'CSV', @rutaArchivo, 'sp_importar_csv_inquilino_propietarios_datos',
             'Email', 'Email inválido según regla: ' + ISNULL(email_personal,'<NULL>')
-        FROM #tmp_import
+        FROM #inquilino_propietarios_datos_tmp
         WHERE email_personal IS NOT NULL AND email_personal <> '' AND email_personal NOT LIKE '%_@_%._%';
+  
 
-        --armo tabla de datos validados
-        IF OBJECT_ID('tempdb..#tmp_validos') IS NOT NULL DROP TABLE #tmp_validos;
-        CREATE TABLE #tmp_validos (
-            DNI_valido CHAR(8),
-            id_tipo_ocupante INT,
-            nombre NVARCHAR(200),
-            apellido NVARCHAR(200),
-            email_personal NVARCHAR(200),
-            telefono NVARCHAR(50),
-            cbu_cvu NVARCHAR(22)
-        );
+        -- 1. Elimino registros con campos obligatorios vacíos
+        DELETE FROM #inquilino_propietarios_datos_tmp
+        WHERE DNI IS NULL OR DNI = ''
+           OR nombre IS NULL OR nombre = ''
+           OR apellido IS NULL OR apellido = '';
 
-        INSERT INTO #tmp_validos (DNI_valido, id_tipo_ocupante, nombre, apellido, email_personal, telefono, cbu_cvu)
-        SELECT DISTINCT
-            TRY_CONVERT(CHAR(8), LTRIM(RTRIM(t.DNI))) AS DNI_valido,
-            CASE WHEN TRY_CONVERT(INT, t.inquilino) = 1 THEN @id_inquilino ELSE @id_propietario END,
+        -- 2. Elimino DNIs no numéricos o fuera de un rango apropiado
+        DELETE FROM #inquilino_propietarios_datos_tmp
+        WHERE TRY_CONVERT(INT, DNI) NOT BETWEEN 10000000 AND 99999999;
+
+        -- 3. Limpieza de mails
+        -- 3.1 Elimino espacios dentro del mail
+        UPDATE #inquilino_propietarios_datos_tmp
+        SET email_personal = REPLACE(email_personal, ' ', '')
+        WHERE email_personal LIKE '% %';
+
+        -- 3.2. Elimino mails con estructuras incorrectas o con símbolos raros
+        DELETE FROM #inquilino_propietarios_datos_tmp
+        WHERE 
+            email_personal NOT LIKE '%@%.%'                                   -- estructura básica inválida
+            OR PATINDEX('%[^A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ@._-]%', email_personal COLLATE Latin1_General_CI_AI) > 0  -- caracteres no permitidos
+            OR email_personal LIKE '%¥%'                                      -- símbolo de yen
+            OR email_personal LIKE '%.@%' OR email_personal LIKE '%..%'       -- punto mal ubicado
+            OR email_personal LIKE '%@%@%';                                   -- doble @
+
+        -- 4. Elimino CBU/CVU demasiado largos
+        DELETE FROM #inquilino_propietarios_datos_tmp
+        WHERE LEN(cbu_cvu) > 22;
+
+        -- 5. Elimino registros con valores no válidos de “inquilino”
+        DELETE FROM #inquilino_propietarios_datos_tmp
+        WHERE inquilino NOT IN ('0','1');
+        -- FIN DE FILTROS TABLA TEMPORAL
+
+
+        -- Cargo los registros filtrados en la tabla Persona
+        INSERT INTO Persona (DNI, id_tipo_ocupante, nombre, apellido, email_personal, telefono, cbu_cvu)
+        SELECT 
+            TRY_CONVERT(CHAR(8), t.DNI),
+            CASE WHEN t.inquilino = '1' THEN @id_inquilino ELSE @id_propietario END,
             t.nombre,
             t.apellido,
             t.email_personal,
             t.telefono,
-            CASE WHEN LTRIM(RTRIM(t.cbu_cvu)) = '' THEN NULL ELSE LTRIM(RTRIM(t.cbu_cvu)) END
-        FROM #tmp_import t
-        LEFT JOIN #tmp_dup d ON d.DNI = t.DNI               -- excluye casos de DNI duplicados en archivo
-        WHERE d.DNI IS NULL
-          AND t.DNI IS NOT NULL
-          AND LEN(LTRIM(RTRIM(t.DNI))) = 8
-          AND TRY_CONVERT(INT, LTRIM(RTRIM(t.DNI))) BETWEEN 10000000 AND 99999999
-          AND NOT EXISTS (SELECT 1 FROM Persona p WHERE p.DNI = TRY_CONVERT(CHAR(8), LTRIM(RTRIM(t.DNI))))
-          AND (t.cbu_cvu IS NULL OR LTRIM(RTRIM(t.cbu_cvu)) = '' OR LEN(LTRIM(RTRIM(t.cbu_cvu))) = 22)
-          AND TRY_CONVERT(INT, t.inquilino) IN (0,1)
-          AND t.nombre IS NOT NULL AND t.nombre <> ''
-          AND t.apellido IS NOT NULL AND t.apellido <> ''
-          AND (t.email_personal IS NULL OR t.email_personal = '' OR t.email_personal LIKE '%_@_%._%');
-
-        --elimino duplicados internos de la tabla 
-        IF OBJECT_ID('tempdb..#tmp_validos_nodup') IS NOT NULL DROP TABLE #tmp_validos_nodup;
-        SELECT *
-        INTO #tmp_validos_nodup
+            t.cbu_cvu
         FROM (
-            SELECT v.*,
-                   ROW_NUMBER() OVER (PARTITION BY DNI_valido ORDER BY (SELECT NULL)) AS rn
-            FROM #tmp_validos v
-        ) x
-        WHERE rn = 1;
+            SELECT *,
+                   ROW_NUMBER() OVER (PARTITION BY TRY_CONVERT(CHAR(8), DNI) ORDER BY (SELECT NULL)) AS rn
+            FROM #inquilino_propietarios_datos_tmp
+        ) AS t
+        WHERE rn = 1
+          AND NOT EXISTS (
+                SELECT 1 FROM Persona AS p 
+                WHERE p.DNI = TRY_CONVERT(CHAR(8), t.DNI)
+          );
 
-       --inserto en persona volviendo a chequear 
-        INSERT INTO Persona (DNI, id_tipo_ocupante, nombre, apellido, email_personal, telefono, cbu_cvu)
-        SELECT v.DNI_valido, v.id_tipo_ocupante, v.nombre, v.apellido, v.email_personal, v.telefono, v.cbu_cvu
-        FROM #tmp_validos_nodup v
-        WHERE NOT EXISTS (SELECT 1 FROM Persona p WHERE p.DNI = v.DNI_valido);
-
-        -- limpia temporales
-        DROP TABLE IF EXISTS #tmp_dupfile;
-        DROP TABLE IF EXISTS #tmp_validos;
-        DROP TABLE IF EXISTS #tmp_validos_nodup;
-        DROP TABLE IF EXISTS #tmp_import;
-
-        RETURN 0;
-
+        COMMIT TRAN;
     END TRY
     BEGIN CATCH
-        -- Si ocurre error crítico,lo registro y no dejo la transacción abierta
-        IF @@TRANCOUNT > 0 ROLLBACK;
+        IF @@TRANCOUNT > 0
+            ROLLBACK TRAN;
+        PRINT 'Error: Lo siento, no se pudo importar el archivo .csv';
+        PRINT ERROR_MESSAGE();
+        THROW;
+    END CATCH
+END;
+GO
+/*
+/********************************************************************
+Consigna: En este script se importa el archivo inquilino-propietarios-UF.csv y se carga la tabla "Persona_Uf"
+*********************************************************************/
+*/
+CREATE OR ALTER PROCEDURE sp_importar_csv_inquilino_propietarios_UF
+    @rutaArchivo NVARCHAR(500)
+AS
+BEGIN
+    SET NOCOUNT ON;
 
-        INSERT INTO ErrorLogs (tipo_archivo, nombre_archivo, origen_sp, campo_error, error_descripcion)
-        VALUES ('CSV', @rutaArchivo, 'sp_importar_csv_inquilino_propietarios_datos', NULL, ERROR_MESSAGE());
+    -- Si existe la tabla temporal la elimino. Para que no tire error al ejecutar dos veces
+    IF OBJECT_ID('tempdb..#inquilino_propietarios_UF_tmp') IS NOT NULL
+        DROP TABLE #inquilinopropietariosUFtmp;
 
-        -- limpio temporales 
-        DROP TABLE IF EXISTS #tmp_dupfile;
-        DROP TABLE IF EXISTS #tmp_validos;
-        DROP TABLE IF EXISTS #tmp_validos_nodup;
-        DROP TABLE IF EXISTS #tmp_import;
+    CREATE TABLE #inquilino_propietarios_UF_tmp (
+        cbu_cvu NVARCHAR(22),
+        nombre NVARCHAR(100),
+        nr_uf NVARCHAR(50),
+        piso NVARCHAR(100),
+        departamento NVARCHAR(50)
+    );
 
+    -- Me fijo si existe el archivo a importar
+    DECLARE @existe INT;
+    EXEC master.dbo.xp_fileexist @rutaArchivo, @existe OUTPUT;
+
+    IF @existe = 0
+    BEGIN
+        RAISERROR('Escribiste mal la ruta, o el archivo no existe.', 16, 1);
+        RETURN;
+    END
+
+    -- Inicio una transacción. O cargamos todo o no cargamos nada
+    BEGIN TRY
+        BEGIN TRAN;
+
+        DECLARE @sql NVARCHAR(MAX);
+        SET @sql = N'
+            BULK INSERT #inquilino_propietarios_UF_tmp
+            FROM ''' + @rutaArchivo + N'''
+            WITH (
+                FIRSTROW = 2,
+                FIELDTERMINATOR = ''|'',
+                ROWTERMINATOR = ''\n'',
+                CODEPAGE = ''ACP''
+            );
+        ';
+        EXEC sp_executesql @sql;
+       
+
+        -- Cargo los registros en la tabla Persona_uf, filtrando repetidos en la consulta
+
+INSERT INTO Persona_UF (DNI, id_uf)
+SELECT 
+    p.DNI,
+    uf.id_uf
+FROM #inquilino_propietarios_UF_tmp AS c --la tabla temporal carga todo bien
+JOIN Persona AS p
+      ON p.cbu_cvu = c.cbu_cvu --hasta acá tiene que estar todo bien
+JOIN Consorcio AS cons
+      ON cons.nombre = c.nombre
+JOIN Unidad_Funcional AS uf
+      ON uf.id_consorcio = cons.id_consorcio
+     AND uf.nr_uf        = c.nr_uf
+     AND uf.piso         = c.piso
+     AND uf.departamento = c.departamento;
+        COMMIT TRAN;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0
+            ROLLBACK TRAN;
+        PRINT 'Error: Lo siento, no se pudo importar el archivo .csv';
+        PRINT ERROR_MESSAGE();
+        THROW;
+    END CATCH
+END;
+GO
+/********************************************************************
+Consigna: En este script se importa el archivo inquilino-propietarios-UF.csv y se carga la tabla "Persona_Uf"
+*********************************************************************/
+
+CREATE OR ALTER PROCEDURE sp_importar_csv_inquilino_propietarios_UF
+    @rutaArchivo NVARCHAR(500)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Si existe la tabla temporal la elimino. Para que no tire error al ejecutar dos veces
+    IF OBJECT_ID('tempdb..#inquilino_propietarios_UF_tmp') IS NOT NULL
+        DROP TABLE #inquilinopropietariosUFtmp;
+
+    CREATE TABLE #inquilino_propietarios_UF_tmp (
+        cbu_cvu NVARCHAR(22),
+        nombre NVARCHAR(100),
+        nr_uf NVARCHAR(50),
+        piso NVARCHAR(100),
+        departamento NVARCHAR(50)
+    );
+
+    -- Me fijo si existe el archivo a importar
+    DECLARE @existe INT;
+    EXEC master.dbo.xp_fileexist @rutaArchivo, @existe OUTPUT;
+
+    IF @existe = 0
+    BEGIN
+        RAISERROR('Escribiste mal la ruta, o el archivo no existe.', 16, 1);
+        RETURN;
+    END
+
+    -- Inicio una transacción. O cargamos todo o no cargamos nada
+    BEGIN TRY
+        BEGIN TRAN;
+
+        DECLARE @sql NVARCHAR(MAX);
+        SET @sql = N'
+            BULK INSERT #inquilino_propietarios_UF_tmp
+            FROM ''' + @rutaArchivo + N'''
+            WITH (
+                FIRSTROW = 2,
+                FIELDTERMINATOR = ''|'',
+                ROWTERMINATOR = ''\n'',
+                CODEPAGE = ''ACP''
+            );
+        ';
+        EXEC sp_executesql @sql;
+       
+
+        -- cargo los registros en la tabla Persona_uf, filtrando repetidos en la consulta
+
+        INSERT INTO Persona_UF (DNI, id_uf)
+        SELECT 
+            p.DNI,
+            uf.id_uf
+        FROM #inquilino_propietarios_UF_tmp AS c --la tabla temporal carga todo bien
+        JOIN Persona AS p
+              ON p.cbu_cvu = c.cbu_cvu --hasta acá tiene que estar todo bien
+        JOIN Consorcio AS cons
+              ON cons.nombre = c.nombre
+        JOIN Unidad_Funcional AS uf
+              ON uf.id_consorcio = cons.id_consorcio
+             AND uf.nr_uf        = c.nr_uf
+             AND uf.piso         = c.piso
+             AND uf.departamento = c.departamento
+             WHERE NOT EXISTS (
+            SELECT 1 FROM Persona_UF pu
+            WHERE pu.DNI = p.DNI
+               OR pu.id_uf = uf.id_uf
+        );
+        COMMIT TRAN;
+    END TRY
+    BEGIN CATCH
+        IF @@TRANCOUNT > 0
+            ROLLBACK TRAN;
+        PRINT 'Error: Lo siento, no se pudo importar el archivo .csv';
+        PRINT ERROR_MESSAGE();
         THROW;
     END CATCH
 END;
 GO
 
-/*
-BASE DE DATOS APLICADA
-
-GRUPO 9
-
-Alumnos:
-Jiménez Damián (DNI 43.194.984)
-Mendoza Gonzalo (DNI 44.597.456)
-Demis Colman (DNI 37.174.947)
-Feiertag Mateo (DNI 46.293.138)
-Suriano Lautaro (DNI 44.792.129)
-Zitelli Emanuel (DNI 45.064.107)
-
+/********************************************************************
 SP para importar "Servicios.Servicios.json" en la tabla Servicio
-*/
+*********************************************************************/
 
 CREATE OR ALTER PROCEDURE sp_ImportarServicios
     @RutaArchivo NVARCHAR(500)
@@ -798,7 +904,7 @@ BEGIN
                 u.Categoria,
                 u.ImporteRaw,
                 Valor = u.ImporteRaw
-                    )
+                    
             FROM despivotar_log u
         )
         INSERT INTO ErrorLogs (
@@ -907,7 +1013,7 @@ BEGIN
 						-- Resto de casos: en-US tal cual (o NULL si tampoco aplica)
 						ELSE TRY_PARSE(REPLACE(REPLACE(u.importeFila, CHAR(160), ''), ' ', '') AS DECIMAL(10,2) USING 'en-US')
 					END
-				)
+				
 			FROM despivotar u
 		)
 		-- Inserto valores finales a la tabla servicio, valido que valor no sea nulo ni sea 0
@@ -934,22 +1040,9 @@ BEGIN
 END;
 GO
 
-/*
-BASE DE DATOS APLICADA
-
-GRUPO 9
-
-Alumnos:
-Jiménez Damián (DNI 43.194.984)
-Mendoza Gonzalo (DNI 44.597.456)
-Demis Colman (DNI 37.174.947)
-Feiertag Mateo (DNI 46.293.138)
-Suriano Lautaro (DNI 44.792.129)
-Zitelli Emanuel (DNI 45.064.107)
-
+/********************************************************************
 SP para lote de prueba tabla Expensa
-*/
-
+*********************************************************************/
 CREATE OR ALTER PROCEDURE sp_lote_expensas
 AS
 BEGIN
@@ -958,7 +1051,7 @@ BEGIN
     DECLARE @min_importe DECIMAL(10,2) = 0;--lo tomo de factura
     DECLARE @max_importe DECIMAL(10,2) = 0;
 
-    --expensas ordinarias: una por consorcio y mes de servicios
+    --genero expensas
     INSERT INTO Expensa (id_consorcio, mes, importe_total)
     SELECT 
         s.ref_consorcio,
@@ -968,7 +1061,6 @@ BEGIN
     GROUP BY s.ref_consorcio, s.mes;
 
 
-    --expensa extraordinaria: sumar facturas del mes más reciente de cada consorcio
     ;WITH recent_month AS (
         SELECT 
             s.ref_consorcio,
@@ -1001,7 +1093,6 @@ BEGIN
 END
 GO
 
-
 /*
 BASE DE DATOS APLICADA
 
@@ -1023,9 +1114,8 @@ CREATE OR ALTER PROCEDURE sp_generar_facturas_prueba
 AS
 BEGIN
     SET NOCOUNT ON;
- ------------------------------------
-    -- 1) Insertar facturas
-    ------------------------------------
+
+    --inserto en Factura
     INSERT INTO Factura (id_servicio, id_expensa, fecha_emision, fecha_vencimiento, importe, detalle)
     SELECT
         s.id_servicio,
@@ -1039,54 +1129,14 @@ BEGIN
         ON e.id_consorcio = s.ref_consorcio
         AND e.mes = s.mes;   
 
-
-    ------------------------------------
-    -- 2) Actualizar Expensa con suma total
-    ------------------------------------
-    UPDATE e
-    SET e.importe_total = e.importe_total + t.total_facturas
-    FROM Expensa e
-    INNER JOIN (
-        SELECT id_expensa, SUM(importe) AS total_facturas
-        FROM Factura
-        GROUP BY id_expensa
-    ) t ON t.id_expensa = e.id_expensa;
-
 END
 GO
 
 
-/*
-BASE DE DATOS APLICADA
-
-GRUPO 9
-
-Alumnos:
-Jiménez Damián (DNI 43.194.984)
-Mendoza Gonzalo (DNI 44.597.456)
-Demis Colman (DNI 37.174.947)
-Feiertag Mateo (DNI 46.293.138)
-Suriano Lautaro (DNI 44.792.129)
-Zitelli Emanuel (DNI 45.064.107)
-
-SP para generar lote de prueba a expensa_detalle
-*/
-
-/*
-BASE DE DATOS APLICADA
-
-GRUPO 9
-
-Alumnos:
-Jiménez Damián (DNI 43.194.984)
-Mendoza Gonzalo (DNI 44.597.456)
-Demis Colman (DNI 37.174.947)
-Feiertag Mateo (DNI 46.293.138)
-Suriano Lautaro (DNI 44.792.129)
-Zitelli Emanuel (DNI 45.064.107)
-
+/********************************************************************
 sp para generar lote en expensa_detalle
-*/
+*********************************************************************/
+
 
 CREATE OR ALTER PROCEDURE sp_CargarExpensaDetalle
 AS
@@ -1095,37 +1145,37 @@ BEGIN
 
     DECLARE @fecha_base DATE = GETDATE();
 
-    --inserto detalles
-    INSERT INTO Expensa_Detalle 
-        (id_expensa, nro_cuota, total_cuotas, descripcion, fecha_venc, importe_uf, estado)
+    --genero detalles, primero todos ordinarios
+    INSERT INTO Expensa_Detalle
+        (id_expensa, nro_cuota, total_cuotas, descripcion, fecha_venc, importe_uf, estado, tipo)
     SELECT
         e.id_expensa,
-        d.nro_cuota,
-        d.total_cuotas,
-        CONCAT('UF ', uf.id_uf, ' - cuota ', d.nro_cuota, ' de ', d.total_cuotas),
-        
-        -- fecha de vencimiento la calculo a partir de: 10 del mes base + nro_cuota - 1 meses
-        DATEADD(MONTH, d.nro_cuota - 1,
-            DATEFROMPARTS(YEAR(@fecha_base), MONTH(@fecha_base), 10)
-        ),
+        cuotas.nro_cuota,
+        cuotas.total_cuotas,
+        CONCAT('UF ', uf.id_uf, ' - cuota ', cuotas.nro_cuota, ' de ', cuotas.total_cuotas) AS descripcion,
 
-        -- importe proporcional por coeficiente de UF y número de cuotas
-        CAST( (e.importe_total * (uf.coeficiente / 100.0)) / d.total_cuotas AS DECIMAL(10,2)),
+        DATEADD(MONTH, cuotas.nro_cuota - 1,
+                DATEFROMPARTS(YEAR(@fecha_base), MONTH(@fecha_base), 10)
+        ) AS fecha_venc,
 
-        --que ponga en el estado 'Vencido' si la fecha de vencimiento ya pasó, 'Pendiente' si no
+        CAST( (e.importe_total * (uf.coeficiente / 100.0)) / cuotas.total_cuotas AS DECIMAL(10,2)) AS importe_uf,
+
         CASE 
-            WHEN DATEADD(MONTH, d.nro_cuota - 1,
+            WHEN DATEADD(MONTH, cuotas.nro_cuota - 1,
                 DATEFROMPARTS(YEAR(@fecha_base), MONTH(@fecha_base), 10)
             ) < CAST(GETDATE() AS DATE)
                 THEN 'Vencido'
             ELSE 'Pendiente'
-        END
+        END AS estado,
+
+        'Ordinaria' AS tipo   -- por defecto
+
     FROM Expensa e
     INNER JOIN Unidad_Funcional uf
         ON uf.id_consorcio = e.id_consorcio
 
     CROSS APPLY (
-        --cantidad de cuotas aleatoria hasta 6
+        -- Cantidad de cuotas aleatoria hasta 6
         SELECT 
             CASE ABS(CHECKSUM(NEWID())) % 3
                 WHEN 0 THEN 1
@@ -1135,34 +1185,43 @@ BEGIN
     ) tc
 
     CROSS APPLY (
-        --genero 1 fila por cuota con la division segun la cantidad ya establecida
+        -- Genero una fila por cuota
         SELECT 
             ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS nro_cuota,
             tc.total_cuotas
         FROM master.dbo.spt_values
         WHERE type = 'P' AND number BETWEEN 1 AND tc.total_cuotas
-    ) d;
+    ) cuotas;
+
+
+    --hago que haya 1 extraordinario por mes
+    ;WITH x AS (
+        SELECT 
+            ed.id_exp_detalle,
+            e.id_consorcio,
+            e.mes,
+            ROW_NUMBER() OVER (
+                PARTITION BY e.id_consorcio, e.mes
+                ORDER BY NEWID()   -- elijo una cuota al azar
+            ) AS rn
+        FROM Expensa_Detalle ed
+        INNER JOIN Expensa e ON ed.id_expensa = e.id_expensa
+    )
+    UPDATE ed
+    SET ed.tipo = 'Extraordinaria'
+    FROM Expensa_Detalle ed
+    INNER JOIN x ON ed.id_exp_detalle = x.id_exp_detalle
+    WHERE x.rn = 1;
+
 
     PRINT 'Expensa_Detalle generados correctamente.';
 END
 GO
 
-/*
-BASE DE DATOS APLICADA
 
-GRUPO 9
-
-Alumnos:
-Jiménez Damián (DNI 43.194.984)
-Mendoza Gonzalo (DNI 44.597.456)
-Demis Colman (DNI 37.174.947)
-Feiertag Mateo (DNI 46.293.138)
-Suriano Lautaro (DNI 44.792.129)
-Zitelli Emanuel (DNI 45.064.107)
-
+/********************************************************************
 sp para importar "pagos_consorcio.csv" en la tabla de Pago referenciadolo con su respectiva expensa_detalle por id
-*/
-
+*********************************************************************/
 
 CREATE OR ALTER PROCEDURE sp_importar_pagos_csv
     @RutaArchivo NVARCHAR(500)
