@@ -16,9 +16,14 @@
 -- Zitelli Emanuel (DNI 45.064.107)
 -- =================================================================
 */
-
 USE Com2900G09;
 GO
+    
+CREATE OR ALTER PROCEDURE dbo.sp_permisos
+AS
+BEGIN
+    SET NOCOUNT ON;
+
 
 -- --- CREACION ROLES ---
 IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'rol_administrativo_general' AND type = 'R')
@@ -110,4 +115,5 @@ ALTER ROLE rol_administrativo_bancario ADD MEMBER [usuario_bancario_1];
 ALTER ROLE rol_administrativo_operativo ADD MEMBER [usuario_operativo_1];
 ALTER ROLE rol_sistemas ADD MEMBER [usuario_sistemas_1];
 
-
+END;
+go
