@@ -83,25 +83,25 @@ GRANT SELECT ON [dbo].[ErrorLogs] TO rol_reportes_lectura;
 
 GRANT EXECUTE ON [dbo].[sp_Importar_UF_Complemento] TO rol_administrativo_general;
 GRANT EXECUTE ON [dbo].[sp_importar_csv_inquilino_propietarios_UF] TO rol_administrativo_general;
-GRANT ADD MEMBER ON rol_reportes_lectura TO rol_administrativo_general; -- Hereda permisos de reportes
+ALTER ROLE rol_reportes_lectura ADD MEMBER rol_administrativo_general; -- Hereda permisos de reportes
 GO
 
 -- ROL: Administrativo Bancario
 
 GRANT EXECUTE ON [dbo].[sp_importar_csv_inquilino_propietarios_datos] TO rol_administrativo_bancario;
-GRANT ADD MEMBER ON rol_reportes_lectura TO rol_administrativo_bancario; -- Hereda permisos de reportes
+ALTER ROLE rol_reportes_lectura ADD MEMBER rol_administrativo_bancario; -- Hereda permisos de reportes
 GO
 
 -- ROL: Administrativo operativo
 
 GRANT EXECUTE ON [dbo].[sp_Importar_UF_Complemento] TO rol_administrativo_operativo;
 GRANT EXECUTE ON [dbo].[sp_importar_csv_inquilino_propietarios_UF] TO rol_administrativo_operativo;
-GRANT ADD MEMBER ON rol_reportes_lectura TO rol_administrativo_operativo; -- Hereda permisos de reportes
+ALTER ROLE rol_reportes_lectura ADD MEMBER rol_administrativo_operativo; -- Hereda permisos de reportes
 GO
 
 -- ROL: Sistemas
 
-GRANT ADD MEMBER ON rol_reportes_lectura TO rol_sistemas; -- Hereda permisos de reportes
+ALTER ROLE rol_reportes_lectura ADD MEMBER rol_sistemas; -- Hereda permisos de reportes
 GO
 
 
