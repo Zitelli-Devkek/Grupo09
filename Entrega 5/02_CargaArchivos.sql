@@ -233,6 +233,9 @@ Zitelli Emanuel (DNI 45.064.107)
 SP para importar "UF por consorcio.txt" en las tablas unidad_funcional y complemento
 */
 
+USE Com2900G09
+GO
+
 CREATE OR ALTER PROCEDURE sp_Importar_UF_Complemento
     @RutaArchivo NVARCHAR(500)
 AS
