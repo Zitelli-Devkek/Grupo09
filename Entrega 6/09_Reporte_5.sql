@@ -121,9 +121,6 @@ BEGIN
 
     IF @venta IS NULL SET @venta = 1;
 
-    -------------------------------------------------------------------
-    -- 1) Obtener coeficiente total del consorcio
-    -------------------------------------------------------------------
     DECLARE @coef_total DECIMAL(18,6);
 
     SELECT @coef_total = SUM(coeficiente)
@@ -132,9 +129,6 @@ BEGIN
 
     IF @coef_total IS NULL SET @coef_total = 1;
 
-    -------------------------------------------------------------------
-    -- 2) Cargos prorrateados por persona según coeficiente UF
-    -------------------------------------------------------------------
     ;WITH Cargos AS (
         SELECT 
             per.DNI,
@@ -148,9 +142,6 @@ BEGIN
         GROUP BY per.DNI
     ),
 
-    -------------------------------------------------------------------
-    -- 3) Pagos por persona (evita pagos duplicados por misma expensa)
-    -------------------------------------------------------------------
     Pagos AS (
         SELECT 
             per.DNI,
@@ -164,9 +155,6 @@ BEGIN
         GROUP BY per.DNI
     )
 
-    -------------------------------------------------------------------
-    -- 4) Resumen final: deuda = cargos - pagos (si negativo ? 0)
-    -------------------------------------------------------------------
     SELECT TOP 3
         per.DNI,
         per.nombre,
