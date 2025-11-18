@@ -14,9 +14,6 @@ Zitelli Emanuel (DNI 45.064.107)
 SP para importar "datos varios.xlsx" hoja de Consorcios en la tabla Consorcio
 */
 
-USE Com2900G09;
-GO
-
 CREATE OR ALTER PROCEDURE sp_ImportarConsorcioExcel
     @RutaArchivo NVARCHAR(260)
 AS
@@ -39,7 +36,7 @@ BEGIN
         --cargar los campos que necesito de mi excel
         SET @SQL = N'
             INSERT INTO #TempConsorcio (NombreDelConsorcio, Domicilio)
-            SELECT [Nombre del consorcio], Domicilio
+            SELECT [Nombre del consorcio], [Domicilio]
             FROM OPENROWSET(
                     ''Microsoft.ACE.OLEDB.12.0'',
                     ''Excel 12.0;HDR=YES;Database=' + @RutaArchivo + ''',
@@ -49,7 +46,9 @@ BEGIN
 
         EXEC sp_executesql @SQL;
 
-        --registtro de errores
+        ---------------------------------------------------------------------
+        -- registro de errores → campos vacíos
+        ---------------------------------------------------------------------
         INSERT INTO ErrorLogs (
             tipo_archivo, nombre_archivo, origen_sp,
             campo_error, error_descripcion
@@ -75,15 +74,48 @@ BEGIN
             NombreDelConsorcio IS NULL OR LTRIM(RTRIM(NombreDelConsorcio)) = ''
             OR Domicilio IS NULL OR LTRIM(RTRIM(Domicilio)) = '';
 
-        --inserto filas validas
+        ---------------------------------------------------------------------
+        -- registro de errores → duplicados en Consorcio
+        ---------------------------------------------------------------------
+        INSERT INTO ErrorLogs (
+            tipo_archivo, nombre_archivo, origen_sp,
+            campo_error, error_descripcion
+        )
+        SELECT
+            'EXCEL',
+            @RutaArchivo,
+            'sp_ImportarConsorcioExcel',
+            'Consorcio duplicado',
+            CONCAT(
+                'El consorcio "', 
+                LTRIM(RTRIM(t.NombreDelConsorcio)), 
+                '" ya existe en la tabla Consorcio'
+            )
+        FROM #TempConsorcio t
+        INNER JOIN Consorcio c
+            ON LTRIM(RTRIM(t.NombreDelConsorcio)) = LTRIM(RTRIM(c.nombre))
+        WHERE 
+            t.NombreDelConsorcio IS NOT NULL
+            AND LTRIM(RTRIM(t.NombreDelConsorcio)) <> '';
+
+        ---------------------------------------------------------------------
+        -- insertar filas válidas (no vacías y no duplicadas)
+        ---------------------------------------------------------------------
         INSERT INTO Consorcio (nombre, domicilio)
         SELECT
-            LTRIM(RTRIM(NombreDelConsorcio)),
-            LEFT(LTRIM(RTRIM(Domicilio)), 25)   --por si excede el tamaño
-        FROM #TempConsorcio
+            LTRIM(RTRIM(t.NombreDelConsorcio)),
+            LTRIM(RTRIM(t.Domicilio))
+        FROM #TempConsorcio t
         WHERE 
-            NombreDelConsorcio IS NOT NULL AND LTRIM(RTRIM(NombreDelConsorcio)) <> ''
-            AND Domicilio IS NOT NULL AND LTRIM(RTRIM(Domicilio)) <> '';
+            -- válidos
+            t.NombreDelConsorcio IS NOT NULL AND LTRIM(RTRIM(t.NombreDelConsorcio)) <> ''
+            AND t.Domicilio IS NOT NULL AND LTRIM(RTRIM(t.Domicilio)) <> ''
+            -- no duplicados
+            AND NOT EXISTS (
+                SELECT 1
+                FROM Consorcio c
+                WHERE LTRIM(RTRIM(c.nombre)) = LTRIM(RTRIM(t.NombreDelConsorcio))
+            );
 
         --borro tabla temp
         DROP TABLE #TempConsorcio;
@@ -105,6 +137,7 @@ BEGIN
 END;
 GO
 
+
 /*
 BASE DE DATOS APLICADA
 
@@ -125,12 +158,13 @@ USE Com2900G09
 GO
 
 CREATE OR ALTER PROCEDURE sp_ImportarProveedoresDesdeExcel
-    @RutaArchivo NVARCHAR(500) 
+    @RutaArchivo NVARCHAR(500)
 AS
 BEGIN
     SET NOCOUNT ON;
 
     BEGIN TRY
+        
         -- Eliminar la tabla temporal si ya existe
         IF OBJECT_ID('tempdb..#ExcelProveedores') IS NOT NULL
             DROP TABLE #ExcelProveedores;
@@ -154,9 +188,12 @@ BEGIN
             FROM OPENROWSET(
                 ''Microsoft.ACE.OLEDB.12.0'',
                 ''Excel 12.0;HDR=NO;Database=' + @RutaArchivo + ''',
-                ''SELECT F1,F2,F3,F4 FROM [Proveedores$]'' 
+                ''SELECT F1,F2,F3,F4 FROM [Proveedores$]''
             ) AS t
-            WHERE F1 IS NOT NULL OR F2 IS NOT NULL OR F4 IS NOT NULL';
+            -- Evito el encabezado porque HDR=NO
+            WHERE NOT (F1 = ''Nombre del consorcio'')
+                  AND (F1 IS NOT NULL OR F2 IS NOT NULL OR F4 IS NOT NULL);
+        ';
         EXEC(@sql);
 
         -- Registrar los errores de validación en la tabla ErrorLogs
@@ -169,9 +206,9 @@ BEGIN
             @RutaArchivo,
             'sp_ImportarProveedoresDesdeExcel',
             CASE 
-                WHEN Categoria IS NULL OR LTRIM(RTRIM(Categoria)) = '' THEN 'Categoria: ' + ISNULL(Categoria, 'NULL')
-                WHEN NombreProveedor IS NULL OR LTRIM(RTRIM(NombreProveedor)) = '' THEN 'NombreProveedor: ' + ISNULL(NombreProveedor, 'NULL')
-                WHEN NombreConsorcio IS NULL OR LTRIM(RTRIM(NombreConsorcio)) = '' THEN 'NombreConsorcio: ' + ISNULL(NombreConsorcio, 'NULL')
+                WHEN Categoria IS NULL OR LTRIM(RTRIM(Categoria)) = '' THEN 'Categoria vacía'
+                WHEN NombreProveedor IS NULL OR LTRIM(RTRIM(NombreProveedor)) = '' THEN 'NombreProveedor vacío'
+                WHEN NombreConsorcio IS NULL OR LTRIM(RTRIM(NombreConsorcio)) = '' THEN 'NombreConsorcio vacío'
             END,
             CASE 
                 WHEN Categoria IS NULL OR LTRIM(RTRIM(Categoria)) = '' THEN 'Categoría vacía'
@@ -185,7 +222,7 @@ BEGIN
             OR NombreConsorcio IS NULL OR LTRIM(RTRIM(NombreConsorcio)) = '';
 
         -- Insertar solo los registros válidos en la tabla Proveedor
-        INSERT INTO Proveedor (consorcio, categoria, nombre_proveedor, detalle)
+        INSERT INTO Proveedor (ref_consorcio, categoria, nombre_proveedor, detalle)
         SELECT
             -- Buscar el id del consorcio según el nombre
             (SELECT id_consorcio FROM Consorcio WHERE nombre = t.NombreConsorcio),
@@ -203,15 +240,28 @@ BEGIN
 
     END TRY
     BEGIN CATCH
-        -- En caso de error, informo
-        INSERT INTO ErrorLogs (
-            tipo_archivo, nombre_archivo, origen_sp, campo_error, error_descripcion
-        )
-        VALUES (
-            'EXCEL', @RutaArchivo, 'sp_ImportarProveedoresDesdeExcel', NULL, ERROR_MESSAGE()
-        );
+        
+        DECLARE @ErrorMessage NVARCHAR(4000) = ERROR_MESSAGE();
 
-        PRINT 'Ocurrió un error durante la importación: ' + ERROR_MESSAGE();
+        -------------------------------------------------------------
+        -- EVITAR registrar errores falsos del proveedor ACE.OLEDB
+        -- Son errores internos que NO afectan la importación real
+        -------------------------------------------------------------
+        IF @ErrorMessage NOT LIKE '%Microsoft.ACE.OLEDB.12.0%'
+           AND @ErrorMessage NOT LIKE '%No se puede inicializar el objeto%'
+           AND @ErrorMessage NOT LIKE '%The Microsoft Access database engine%'
+        BEGIN
+            INSERT INTO ErrorLogs (
+                tipo_archivo, nombre_archivo, origen_sp, campo_error, error_descripcion
+            )
+            VALUES (
+                'EXCEL', @RutaArchivo, 'sp_ImportarProveedoresDesdeExcel',
+                NULL, @ErrorMessage
+            );
+        END
+
+        PRINT 'Ocurrió un error durante la importación: ' + @ErrorMessage;
+
     END CATCH
 END;
 GO
