@@ -100,7 +100,7 @@ CREATE TABLE Persona_UF (
 CREATE TABLE Servicio (
     id_servicio INT IDENTITY(1,1) PRIMARY KEY,
     ref_consorcio INT NOT NULL,
-    mes VARCHAR(20) NOT NULL,
+    mes CHAR(20) NOT NULL,
     categoria VARCHAR(50) NOT NULL,
     valor DECIMAL (10,2) NOT NULL CHECK (valor >= 0)
 );
@@ -110,7 +110,7 @@ CREATE TABLE Expensa (
     id_expensa INT IDENTITY(1,1) PRIMARY KEY,
     id_consorcio INT NOT NULL
         CONSTRAINT FK_UF_Consorcio2 FOREIGN KEY REFERENCES Consorcio(id_consorcio),
-    mes CHAR(7) NOT NULL,
+    mes VARCHAR(20) NOT NULL,
     importe_total DECIMAL(10,2) NOT NULL CHECK (importe_total >= 0),
 );
 
