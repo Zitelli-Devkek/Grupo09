@@ -17,6 +17,8 @@
 -- =================================================================
 */
 
+CREATE OR ALTER PROCEDURE dbo.sp_permisos
+
 USE Com2900G09;
 GO
 
@@ -110,4 +112,5 @@ ALTER ROLE rol_administrativo_bancario ADD MEMBER [usuario_bancario_1];
 ALTER ROLE rol_administrativo_operativo ADD MEMBER [usuario_operativo_1];
 ALTER ROLE rol_sistemas ADD MEMBER [usuario_sistemas_1];
 
-
+END;
+go
