@@ -104,32 +104,6 @@ GO
 ALTER ROLE rol_reportes_lectura ADD MEMBER rol_sistemas; -- Hereda permisos de reportes
 GO
 
-
--- ---  (En duda) CREACION DE USUARIOS Y ASIGNACION A ROLES ---
-
-IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'usuario_general_1')
-BEGIN
-    CREATE USER [usuario_general_1] FOR LOGIN [login_general_1];
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'usuario_bancario_1')
-BEGIN
-    CREATE USER [usuario_bancario_1] FOR LOGIN [login_bancario_1];
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'usuario_operativo_1')
-BEGIN
-    CREATE USER [usuario_operativo_1] FOR LOGIN [login_operativo_1];
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'usuario_sistemas_1')
-BEGIN
-    CREATE USER [usuario_sistemas_1] FOR LOGIN [login_sistemas_1];
-END
-GO
 -- Asignar usuarios a roles
 ALTER ROLE rol_administrativo_general ADD MEMBER [usuario_general_1];
 ALTER ROLE rol_administrativo_bancario ADD MEMBER [usuario_bancario_1];
