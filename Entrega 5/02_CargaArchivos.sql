@@ -800,10 +800,7 @@ BEGIN
                 u.Mes,
                 u.Categoria,
                 u.ImporteRaw,
-                Valor =
-                    COALESCE(
-                        TRY_PARSE(REPLACE(u.ImporteRaw, ' ', '') AS DECIMAL(10,2) USING 'es-AR'),
-                        TRY_PARSE(REPLACE(u.ImporteRaw, ' ', '') AS DECIMAL(10,2) USING 'en-US') / 100.0
+                Valor = u.ImporteRaw
                     )
             FROM despivotar_log u
         )
@@ -897,9 +894,22 @@ BEGIN
 				u.Mes,
 				u.Categoria,
 				Valor =
-					COALESCE(
-					TRY_PARSE(REPLACE(u.importeFila, ' ', '') AS DECIMAL(10,2) USING 'es-AR'),
-					TRY_PARSE(REPLACE(u.importeFila, ' ', '') AS DECIMAL(10,2) USING 'en-US') / 100.0
+					CASE
+						-- Intento normal es-AR (punto miles, coma decimal)
+						WHEN TRY_PARSE(REPLACE(REPLACE(u.importeFila, CHAR(160), ''), ' ', '') AS DECIMAL(10,2) USING 'es-AR') IS NOT NULL
+						THEN TRY_PARSE(REPLACE(REPLACE(u.importeFila, CHAR(160), ''), ' ', '') AS DECIMAL(10,2) USING 'es-AR')
+
+						-- Si es-AR falla, pruebo en-US.
+						-- en-US lo parsea como 12,708,000.00, así que divido por 100 para recuperar 2 decimales.
+						WHEN TRY_PARSE(REPLACE(REPLACE(u.importeFila, CHAR(160), ''), ' ', '') AS DECIMAL(10,2) USING 'en-US') IS NOT NULL
+							 AND (LEN(REPLACE(REPLACE(u.importeFila, CHAR(160), ''), ' ', '')) 
+								  - LEN(REPLACE(REPLACE(REPLACE(u.importeFila, CHAR(160), ''), ' ', ''), ',', ''))) > 1
+							 AND CHARINDEX('.', REPLACE(REPLACE(u.importeFila, CHAR(160), ''), ' ', '')) = 0
+						THEN TRY_PARSE(REPLACE(REPLACE(u.importeFila, CHAR(160), ''), ' ', '') AS DECIMAL(10,2) USING 'en-US') / 100.0
+
+						-- Resto de casos: en-US tal cual (o NULL si tampoco aplica)
+						ELSE TRY_PARSE(REPLACE(REPLACE(u.importeFila, CHAR(160), ''), ' ', '') AS DECIMAL(10,2) USING 'en-US')
+					END
 				)
 			FROM despivotar u
 		)
