@@ -803,7 +803,7 @@ BEGIN
                 Valor =
                     COALESCE(
                         TRY_PARSE(REPLACE(u.ImporteRaw, ' ', '') AS DECIMAL(10,2) USING 'es-AR'),
-                        TRY_PARSE(REPLACE(u.ImporteRaw, ' ', '') AS DECIMAL(10,2) USING 'en-US')
+                        TRY_PARSE(REPLACE(u.ImporteRaw, ' ', '') AS DECIMAL(10,2) USING 'en-US') / 100.0
                     )
             FROM despivotar_log u
         )
@@ -899,7 +899,7 @@ BEGIN
 				Valor =
 					COALESCE(
 					TRY_PARSE(REPLACE(u.importeFila, ' ', '') AS DECIMAL(10,2) USING 'es-AR'),
-					TRY_PARSE(REPLACE(u.importeFila, ' ', '') AS DECIMAL(10,2) USING 'en-US')
+					TRY_PARSE(REPLACE(u.importeFila, ' ', '') AS DECIMAL(10,2) USING 'en-US') / 100.0
 				)
 			FROM despivotar u
 		)
