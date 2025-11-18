@@ -50,15 +50,18 @@ GRANT EXECUTE ON [dbo].[sp_Report_PagosOrdinariosPorUF_XML] TO rol_reportes_lect
 -- Permiso de SELECT en las tablas que leen los reportes
 GRANT SELECT ON [dbo].[Pago] TO rol_reportes_lectura;
 GRANT SELECT ON [dbo].[Expensa_Detalle] TO rol_reportes_lectura;
-GRANT SELECT ON [dbo].[Expensa] TO rol_reportes_lectura;
 GRANT SELECT ON [dbo].[Factura] TO rol_reportes_lectura;
 GRANT SELECT ON [dbo].[Persona_UF] TO rol_reportes_lectura;
 GRANT SELECT ON [dbo].[Complemento] TO rol_reportes_lectura;
+GRANT SELECT ON [dbo].[Unidad_Funcional] TO rol_reportes_lectura;
+GRANT SELECT ON [dbo].[Expensa] TO rol_reportes_lectura;
+GRANT SELECT ON [dbo].[Servicio] TO rol_reportes_lectura;
 GRANT SELECT ON [dbo].[Persona] TO rol_reportes_lectura;
 GRANT SELECT ON [dbo].[Tipo_Ocupante] TO rol_reportes_lectura;
-GRANT SELECT ON [dbo].[Unidad_Funcional] TO rol_reportes_lectura;
-GRANT SELECT ON [dbo].[Servicio] TO rol_reportes_lectura;
 GRANT SELECT ON [dbo].[Consorcio] TO rol_reportes_lectura;
+GRANT SELECT ON [dbo].[Proveedor] TO rol_reportes_lectura;
+GRANT SELECT ON [dbo].[ErrorLogs] TO rol_reportes_lectura;
+
 
 
 
