@@ -17,8 +17,6 @@ Se desea analizar el flujo de caja en forma semanal. Debe presentar la recaudaci
 pagos ordinarios y extraordinarios de cada semana, el promedio en el periodo, y el
 acumulado progresivo.*/
 
-USE Com2900G09
-GO
 
 CREATE OR ALTER PROCEDURE dbo.sp_Report_FlujoCajaSemanal
     @id_consorcio INT,
@@ -41,7 +39,7 @@ BEGIN
             p.fecha,
             p.valor AS importe_pesos,
             CASE 
-                WHEN ed.descripcion IS NOT NULL AND LOWER(ed.descripcion) LIKE '%extra%' THEN 'Extraordinario'
+                WHEN ed.tipo IS NOT NULL AND LOWER(ed.tipo) LIKE '%extra%' THEN 'Extraordinario'
                 ELSE 'Ordinario'
             END AS tipo_pago,
             DATEPART(YEAR, p.fecha) AS anio,
@@ -107,3 +105,4 @@ BEGIN
     ORDER BY anio, semana_num, tipo_pago;
 END
 GO
+

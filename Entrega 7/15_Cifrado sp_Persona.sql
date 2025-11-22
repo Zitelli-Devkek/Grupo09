@@ -17,8 +17,7 @@
 -- =================================================================
 */
 
-USE Com2900G09;
-GO
+
 
 CREATE OR ALTER PROCEDURE sp_importar_csv_inquilino_propietarios_datos
     @rutaArchivo NVARCHAR(500) 
@@ -114,3 +113,4 @@ WHERE TRY_CONVERT(INT, inquilino) IN (0, 1)
     END CATCH
 END;
 GO
+

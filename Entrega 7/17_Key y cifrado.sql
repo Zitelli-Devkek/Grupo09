@@ -18,8 +18,6 @@
 */
 
 
-USE Com2900G09; 
-GO
 IF NOT EXISTS (SELECT * FROM sys.symmetric_keys WHERE name = '##MS_DatabaseMasterKey##')
 BEGIN
     CREATE MASTER KEY ENCRYPTION BY PASSWORD = 'password09';
@@ -35,6 +33,7 @@ GO
 IF NOT EXISTS (SELECT * FROM sys.symmetric_keys WHERE name = 'SK_DatosSensibles')
 BEGIN
     CREATE SYMMETRIC KEY SK_DatosSensibles
+    WITH ALGORITHM = AES_256
     ENCRYPTION BY CERTIFICATE Cert_DatosSensibles;
 END
 GO
@@ -68,8 +67,8 @@ GO
 
 ALTER TABLE Persona DROP COLUMN DNI;
 ALTER TABLE Persona DROP COLUMN email_personal;
-ALTER TABLE Persona DROP COLUMN telefono;
-ALTER TABLE Persona DROP COLUMN cbu_cvu;
+ALTER TABLE Persona DROP COLUMN telefono;--2
+ALTER TABLE Persona DROP COLUMN cbu_cvu;--1
 GO
 
 
@@ -81,3 +80,5 @@ GO
 
 CLOSE SYMMETRIC KEY SK_DatosSensibles;
 GO
+
+select * from Persona

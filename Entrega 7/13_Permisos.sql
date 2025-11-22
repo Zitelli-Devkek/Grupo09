@@ -105,3 +105,5 @@ BEGIN
 
 END
 GO
+
+EXEC dbo.sp_permisos

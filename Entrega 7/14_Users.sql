@@ -22,3 +22,5 @@ BEGIN
 
 END
 GO
+
+EXEC dbo.sp_crear_usuarios

@@ -1116,10 +1116,11 @@ BEGIN
     SET NOCOUNT ON;
 
     --inserto en Factura
-    INSERT INTO Factura (id_servicio, id_expensa, fecha_emision, fecha_vencimiento, importe, detalle)
+    INSERT INTO Factura (id_servicio, id_expensa, id_proveedor, fecha_emision, fecha_vencimiento, importe, detalle)
     SELECT
         s.id_servicio,
         e.id_expensa,
+        p.id_proveedor,
         GETDATE(),
         DATEADD(DAY, 30, GETDATE()),
         s.valor,
@@ -1127,8 +1128,10 @@ BEGIN
     FROM Servicio s
     INNER JOIN Expensa e
         ON e.id_consorcio = s.ref_consorcio
-        AND e.mes = s.mes;   
-
+        AND e.mes = s.mes
+    INNER JOIN Proveedor p
+        ON p.id_proveedor = id_proveedor
+        
 END
 GO
 

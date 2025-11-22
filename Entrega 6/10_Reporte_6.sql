@@ -16,8 +16,6 @@ Reporte 6
 Muestre las fechas de pagos de expensas ordinarias de cada UF y la cantidad de días que
 pasan entre un pago y el siguiente, para el conjunto examinado.*/
 
-USE Com2900G09
-GO
 
 CREATE OR ALTER PROCEDURE dbo.sp_Report_PagosOrdinariosPorUF_XML
     @id_consorcio INT,
@@ -26,7 +24,7 @@ CREATE OR ALTER PROCEDURE dbo.sp_Report_PagosOrdinariosPorUF_XML
 AS
 BEGIN
     SET NOCOUNT ON;
-
+    
     ;WITH pagos_por_uf AS (
         SELECT
             uf.id_uf,

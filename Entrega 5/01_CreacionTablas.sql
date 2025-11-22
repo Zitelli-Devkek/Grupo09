@@ -13,10 +13,6 @@ Zitelli Emanuel (DNI 45.064.107)
 
 CREACION DE LAS TABLAS PARA EL PROYECTO
 */
-
-USE Com2900G09
-GO
-
 CREATE OR ALTER PROCEDURE sp_CreacionTablas
 AS
 BEGIN
@@ -119,7 +115,9 @@ CREATE TABLE Factura (
     id_servicio INT NOT NULL
         CONSTRAINT FK_Servicio FOREIGN KEY REFERENCES Servicio(id_servicio),
     id_expensa INT NOT NULL
-         CONSTRAINT FK_ED_Exp FOREIGN KEY REFERENCES Expensa(id_expensa),
+        CONSTRAINT FK_ED_Exp FOREIGN KEY REFERENCES Expensa(id_expensa),
+    id_proveedor INT
+        CONSTRAINT FK_Proveedor FOREIGN KEY REFERENCES Proveedor(id_proveedor),
     fecha_emision DATE NOT NULL,
     fecha_vencimiento DATE NOT NULL,
     importe DECIMAL(10,2) NOT NULL,
@@ -164,4 +162,4 @@ CREATE TABLE ErrorLogs (
 END
 GO
 
-EXEC sp_creacionTablas
+exec sp_CreacionTablas

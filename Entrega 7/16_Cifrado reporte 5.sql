@@ -17,8 +17,6 @@
 -- =================================================================
 */
 
-USE Com2900G09
-GO
 
 
 
@@ -52,8 +50,6 @@ BEGIN
                 SUM(ISNULL(ed.importe_uf,0)) AS total_cargos_pesos
             FROM Persona per
             LEFT JOIN Persona_UF puf ON puf.DNI_Cifrado = per.DNI_Cifrado -- (Asumiendo que el JOIN es por la PK cifrada)
-                AND puf.fecha_inicio <= @fecha_fin
-                AND (puf.fecha_fin IS NULL OR puf.fecha_fin >= @fecha_inicio)
             LEFT JOIN Unidad_Funcional uf ON uf.id_uf = puf.id_uf
             LEFT JOIN Expensa e ON e.id_consorcio = @id_consorcio
             LEFT JOIN Expensa_Detalle ed ON ed.id_expensa = e.id_expensa

@@ -15,8 +15,6 @@ Zitelli Emanuel (DNI 45.064.107)
 Genere índices para optimizar la ejecución de las consultas de los reportes. Debe existir un
 script adicional con la generación de índices.*/
 
-USE Com2900G09;
-GO
 
 CREATE OR ALTER PROCEDURE sp_CreacionIndices
 AS

@@ -17,9 +17,6 @@ Presente un cuadro cruzado con la recaudación total desagregada según su procede
 (ordinario, extraordinario, etc.) según el periodo.*/
 
 
-USE Com2900G09;
-GO
-
 CREATE OR ALTER PROCEDURE dbo.sp_Report_RecaudacionPorProcedencia_Unica
     @id_consorcio INT,
     @fecha_inicio DATE,
