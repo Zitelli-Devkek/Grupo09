@@ -20,7 +20,7 @@
 
 
 
-CREATE OR ALTER PROCEDURE dbo.sp_Report_Top3Morosos_XML
+CREATE OR ALTER PROCEDURE dbo.spReportTop3MorososXML
     @id_consorcio INT,
     @fecha_inicio DATE,
     @fecha_fin DATE
@@ -49,7 +49,7 @@ BEGIN
                 per.telefono,
                 SUM(ISNULL(ed.importe_uf,0)) AS total_cargos_pesos
             FROM Persona per
-            LEFT JOIN Persona_UF puf ON puf.DNI_Cifrado = per.DNI_Cifrado -- (Asumiendo que el JOIN es por la PK cifrada)
+            LEFT JOIN Persona_UF puf ON puf.DNI = per.DNI
             LEFT JOIN Unidad_Funcional uf ON uf.id_uf = puf.id_uf
             LEFT JOIN Expensa e ON e.id_consorcio = @id_consorcio
             LEFT JOIN Expensa_Detalle ed ON ed.id_expensa = e.id_expensa
@@ -113,3 +113,8 @@ BEGIN
     END CATCH
 END
 GO
+
+EXEC dbo.spReportTop3MorososXML
+    @id_consorcio = 1,
+    @fecha_inicio = '2025-01-01',
+    @fecha_fin = '2026-10-31';
