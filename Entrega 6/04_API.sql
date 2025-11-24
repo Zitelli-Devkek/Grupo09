@@ -14,6 +14,8 @@ Zitelli Emanuel (DNI 45.064.107)
 
 Creación de API*/
 
+USE Com2900G09
+GO
 
 EXEC sp_configure 'show advanced options', 1;
 RECONFIGURE;
@@ -23,7 +25,7 @@ GO
 
 -- CREACIÓN DE TABLA TEMPORAL
 
-CREATE OR ALTER PROCEDURE sp_creacionTablaAPI
+CREATE OR ALTER PROCEDURE spcreacionTablaAPI
 AS
 BEGIN
 IF OBJECT_ID('tempdb..##DolarHistorico') IS NOT NULL
@@ -45,7 +47,7 @@ GO
 
 -- CREACIÓN DEL PROCEDIMIENTO 
 
-CREATE OR ALTER PROCEDURE sp_ActualizarDolar
+CREATE OR ALTER PROCEDURE spActualizarDolar
 AS
 BEGIN
     DECLARE @url NVARCHAR(256) = 'https://dolarapi.com/v1/dolares';

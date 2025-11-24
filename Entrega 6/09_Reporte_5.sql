@@ -17,9 +17,10 @@ Obtenga los 3 (tres) propietarios con mayor morosidad. Presente información de c
 DNI de los propietarios para que la administración los pueda contactar o remitir el trámite al
 estudio jurídico.*/
 
+USE Com2900G09
+GO
 
-
-CREATE OR ALTER PROCEDURE dbo.sp_Report_Top3Morosos_XML
+CREATE OR ALTER PROCEDURE dbo.spReport_Top3Morosos_XML
     @id_consorcio INT,
     @fecha_inicio DATE,
     @fecha_fin DATE

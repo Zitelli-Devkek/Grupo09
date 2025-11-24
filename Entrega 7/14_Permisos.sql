@@ -16,7 +16,7 @@
 -- Zitelli Emanuel (DNI 45.064.107)
 -- =================================================================
 */
-CREATE OR ALTER PROCEDURE dbo.sp_permisos
+CREATE OR ALTER PROCEDURE dbo.sppermisos
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -48,12 +48,12 @@ BEGIN
 
 
     -- Permiso para ejecutar todos los SP de reportes
-    GRANT EXECUTE ON [dbo].[sp_Report_FlujoCajaSemanal] TO rol_reportes_lectura;
-    GRANT EXECUTE ON [dbo].[sp_Reporte2_RecaudacionMensual] TO rol_reportes_lectura;
-    GRANT EXECUTE ON [dbo].[sp_Report_RecaudacionPorProcedencia_Unica] TO rol_reportes_lectura;
-    GRANT EXECUTE ON [dbo].[sp_Report_Top5GastosIngresos] TO rol_reportes_lectura;
-    GRANT EXECUTE ON [dbo].[sp_Report_Top3Morosos_XML] TO rol_reportes_lectura;
-    GRANT EXECUTE ON [dbo].[sp_Report_PagosOrdinariosPorUF_XML] TO rol_reportes_lectura;
+    GRANT EXECUTE ON [dbo].[spReport_FlujoCajaSemanal] TO rol_reportes_lectura;
+    GRANT EXECUTE ON [dbo].[spReporte2_RecaudacionMensual] TO rol_reportes_lectura;
+    GRANT EXECUTE ON [dbo].[spReport_RecaudacionPorProcedencia_Unica] TO rol_reportes_lectura;
+    GRANT EXECUTE ON [dbo].[spReport_Top5GastosIngresos] TO rol_reportes_lectura;
+    GRANT EXECUTE ON [dbo].[spReport_Top3Morosos_XML] TO rol_reportes_lectura;
+    GRANT EXECUTE ON [dbo].[spReport_PagosOrdinariosPorUF_XML] TO rol_reportes_lectura;
 
     -- Permiso de SELECT en las tablas que leen los reportes
     GRANT SELECT ON [dbo].[Pago] TO rol_reportes_lectura;
@@ -71,17 +71,17 @@ BEGIN
     GRANT SELECT ON [dbo].[ErrorLogs] TO rol_reportes_lectura;
 
     -- ROL: administrativo general
-    GRANT EXECUTE ON [dbo].[sp_Importar_UF_Complemento] TO rol_administrativo_general;
-    GRANT EXECUTE ON [dbo].[sp_importar_csv_inquilino_propietarios_UF] TO rol_administrativo_general;
+    GRANT EXECUTE ON [dbo].[spImportar_UF_Complemento] TO rol_administrativo_general;
+    GRANT EXECUTE ON [dbo].[spimportar_csv_inquilino_propietarios_UF] TO rol_administrativo_general;
     ALTER ROLE rol_reportes_lectura ADD MEMBER rol_administrativo_general; 
 
     -- ROL: Administrativo Bancario
-    GRANT EXECUTE ON [dbo].[sp_importar_csv_inquilino_propietarios_datos] TO rol_administrativo_bancario;
+    GRANT EXECUTE ON [dbo].[spimportar_csv_inquilino_propietarios_datos] TO rol_administrativo_bancario;
     ALTER ROLE rol_reportes_lectura ADD MEMBER rol_administrativo_bancario;
 
     -- ROL: Administrativo operativo
-    GRANT EXECUTE ON [dbo].[sp_Importar_UF_Complemento] TO rol_administrativo_operativo;
-    GRANT EXECUTE ON [dbo].[sp_importar_csv_inquilino_propietarios_UF] TO rol_administrativo_operativo;
+    GRANT EXECUTE ON [dbo].[spImportar_UF_Complemento] TO rol_administrativo_operativo;
+    GRANT EXECUTE ON [dbo].[spimportar_csv_inquilino_propietarios_UF] TO rol_administrativo_operativo;
     ALTER ROLE rol_reportes_lectura ADD MEMBER rol_administrativo_operativo; 
 
     -- ROL: Sistemas
@@ -106,4 +106,4 @@ BEGIN
 END
 GO
 
-EXEC dbo.sp_permisos
+EXEC dbo.sppermisos

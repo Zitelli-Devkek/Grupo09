@@ -15,8 +15,10 @@ Zitelli Emanuel (DNI 45.064.107)
 Reporte 2
 Presente el total de recaudación por mes y departamento en formato de tabla cruzada. */
 
+USE Com2900G09
+GO
 
-CREATE OR ALTER PROCEDURE dbo.sp_Reporte2_RecaudacionMensual
+CREATE OR ALTER PROCEDURE dbo.spReporte2_RecaudacionMensual
     @Anio INT,
     @IdConsorcio INT = NULL,
     @MesInicio INT = 1,

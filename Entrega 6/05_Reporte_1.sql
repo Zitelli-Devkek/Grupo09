@@ -17,8 +17,10 @@ Se desea analizar el flujo de caja en forma semanal. Debe presentar la recaudaci
 pagos ordinarios y extraordinarios de cada semana, el promedio en el periodo, y el
 acumulado progresivo.*/
 
+USE Com2900G09
+GO
 
-CREATE OR ALTER PROCEDURE dbo.sp_Report_FlujoCajaSemanal
+CREATE OR ALTER PROCEDURE dbo.spReport_FlujoCajaSemanal
     @id_consorcio INT,
     @fecha_inicio DATE,
     @fecha_fin DATE

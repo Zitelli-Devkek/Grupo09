@@ -1,7 +1,7 @@
 USE Com2900G09;
 GO
 
-CREATE OR ALTER PROCEDURE dbo.sp_crear_usuarios
+CREATE OR ALTER PROCEDURE dbo.spcrear_usuarios
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -23,4 +23,4 @@ BEGIN
 END
 GO
 
-EXEC dbo.sp_crear_usuarios
+EXEC dbo.spcrear_usuarios

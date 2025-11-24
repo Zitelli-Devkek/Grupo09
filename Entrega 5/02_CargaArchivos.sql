@@ -18,7 +18,10 @@ CREACION DE SP PARA IMPORTAR A TABLAS
 SP para importar "datos varios.xlsx" hoja de Consorcios en la tabla Consorcio
 *********************************************************************/
 
-CREATE OR ALTER PROCEDURE sp_ImportarConsorcioExcel
+USE Com2900G09
+GO
+
+CREATE OR ALTER PROCEDURE spImportarConsorcioExcel
     @RutaArchivo NVARCHAR(260)
 AS
 BEGIN
@@ -132,7 +135,7 @@ GO
 SP para importar "datos varios.xlsx" hoja de Proveedores en la tabla Proveedor
 *********************************************************************/
 
-CREATE OR ALTER PROCEDURE sp_ImportarProveedoresDesdeExcel
+CREATE OR ALTER PROCEDURE spImportarProveedoresDesdeExcel
     @RutaArchivo NVARCHAR(500)
 AS
 BEGIN
@@ -243,7 +246,7 @@ GO
 SP para importar "UF por consorcio.txt" en las tablas unidad_funcional y complemento
 *********************************************************************/
 
-CREATE OR ALTER PROCEDURE sp_Importar_UF_Complemento
+CREATE OR ALTER PROCEDURE spImportar_UF_Complemento
     @RutaArchivo NVARCHAR(500)
 AS
 BEGIN
@@ -389,7 +392,7 @@ GO
 Consigna: En este script se importa el archivo inquilino-propietarios-datos.csv y se carga en las tablas "Tipo_Ocupante" y "Persona"
 *********************************************************************/
 
-CREATE OR ALTER PROCEDURE sp_importar_csv_inquilino_propietarios_datos
+CREATE OR ALTER PROCEDURE spimportar_csv_inquilino_propietarios_datos
     @rutaArchivo NVARCHAR(500)
 AS
 BEGIN
@@ -619,7 +622,7 @@ GO
 Consigna: En este script se importa el archivo inquilino-propietarios-UF.csv y se carga la tabla "Persona_Uf"
 *********************************************************************/
 */
-CREATE OR ALTER PROCEDURE sp_importar_csv_inquilino_propietarios_UF
+CREATE OR ALTER PROCEDURE spimportar_csv_inquilino_propietarios_UF
     @rutaArchivo NVARCHAR(500)
 AS
 BEGIN
@@ -696,7 +699,7 @@ GO
 Consigna: En este script se importa el archivo inquilino-propietarios-UF.csv y se carga la tabla "Persona_Uf"
 *********************************************************************/
 
-CREATE OR ALTER PROCEDURE sp_importar_csv_inquilino_propietarios_UF
+CREATE OR ALTER PROCEDURE spimportar_csv_inquilino_propietarios_UF
     @rutaArchivo NVARCHAR(500)
 AS
 BEGIN
@@ -779,7 +782,7 @@ GO
 SP para importar "Servicios.Servicios.json" en la tabla Servicio
 *********************************************************************/
 
-CREATE OR ALTER PROCEDURE sp_ImportarServicios
+CREATE OR ALTER PROCEDURE spImportarServicios
     @RutaArchivo NVARCHAR(500)
 AS
 BEGIN
@@ -1043,7 +1046,7 @@ GO
 /********************************************************************
 SP para lote de prueba tabla Expensa
 *********************************************************************/
-CREATE OR ALTER PROCEDURE sp_lote_expensas
+CREATE OR ALTER PROCEDURE splote_expensas
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -1110,7 +1113,7 @@ SP para lote de prueba de tabla Factura
 */
 
 
-CREATE OR ALTER PROCEDURE sp_generar_facturas_prueba
+CREATE OR ALTER PROCEDURE spgenerar_facturas_prueba
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -1141,7 +1144,7 @@ sp para generar lote en expensa_detalle
 *********************************************************************/
 
 
-CREATE OR ALTER PROCEDURE sp_CargarExpensaDetalle
+CREATE OR ALTER PROCEDURE spCargarExpensaDetalle
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -1226,7 +1229,7 @@ GO
 sp para importar "pagos_consorcio.csv" en la tabla de Pago referenciadolo con su respectiva expensa_detalle por id
 *********************************************************************/
 
-CREATE OR ALTER PROCEDURE sp_importar_pagos_csv
+CREATE OR ALTER PROCEDURE spimportar_pagos_csv
     @RutaArchivo NVARCHAR(500)
 AS
 BEGIN

@@ -1,7 +1,7 @@
 -- Esto se ejecuta en la base de datos 'master'
 
 
-CREATE OR ALTER PROCEDURE dbo.sp_crear_logins
+CREATE OR ALTER PROCEDURE dbo.spcrear_logins
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -32,4 +32,4 @@ BEGIN
 END
 GO
 
-EXEC dbo.sp_crear_logins
+EXEC dbo.spcrear_logins

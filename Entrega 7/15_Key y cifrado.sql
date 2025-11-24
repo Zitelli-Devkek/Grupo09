@@ -17,73 +17,92 @@
 -- =================================================================
 */
 
-
 USE Com2900G09;
 GO
 
-IF NOT EXISTS (SELECT * FROM sys.symmetric_keys WHERE name = '##MS_DatabaseMasterKey##')
+/* ========================================================
+    1) CREACIÓN DE CLAVES SI NO EXISTEN
+======================================================== */
+IF NOT EXISTS (SELECT 1 FROM sys.symmetric_keys WHERE name = '##MS_DatabaseMasterKey##')
     CREATE MASTER KEY ENCRYPTION BY PASSWORD = 'password09';
 GO
-IF NOT EXISTS (SELECT * FROM sys.certificates WHERE name = 'Cert_DatosSensibles')
+
+IF NOT EXISTS (SELECT 1 FROM sys.certificates WHERE name = 'Cert_DatosSensibles')
     CREATE CERTIFICATE Cert_DatosSensibles WITH SUBJECT = 'Certificado para cifrado de datos personales';
 GO
-IF NOT EXISTS (SELECT * FROM sys.symmetric_keys WHERE name = 'SK_DatosSensibles')
-    CREATE SYMMETRIC KEY SK_DatosSensibles WITH ALGORITHM = AES_256 ENCRYPTION BY CERTIFICATE Cert_DatosSensibles;
-GO
 
-OPEN SYMMETRIC KEY SK_DatosSensibles DECRYPTION BY CERTIFICATE Cert_DatosSensibles;
-GO
-
-
-IF EXISTS(SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Persona') AND name = 'DNI_Enc')
-    ALTER TABLE Persona DROP COLUMN DNI_Enc;
-IF EXISTS(SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Persona') AND name = 'Email_Enc')
-    ALTER TABLE Persona DROP COLUMN Email_Enc;
-IF EXISTS(SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Persona') AND name = 'Telefono_Enc')
-    ALTER TABLE Persona DROP COLUMN Telefono_Enc;
-IF EXISTS(SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Persona') AND name = 'CVU_CBU_Enc')
-    ALTER TABLE Persona DROP COLUMN CVU_CBU_Enc;
+IF NOT EXISTS (SELECT 1 FROM sys.symmetric_keys WHERE name = 'SK_DatosSensibles')
+    CREATE SYMMETRIC KEY SK_DatosSensibles WITH ALGORITHM = AES_256 
+    ENCRYPTION BY CERTIFICATE Cert_DatosSensibles;
 GO
 
 
-DECLARE @sqlLimpieza NVARCHAR(MAX) = '';
+/* ========================================================
+    2) ELIMINAR RESTRICCIONES, CHECKS, DEFAULTS, FKs, PKs, ÚNICOS
+======================================================== */
 
---  DROP de Foreign Keys que apunten a Persona 
-SELECT @sqlLimpieza += 'ALTER TABLE ' + OBJECT_NAME(parent_object_id) + 
-       ' DROP CONSTRAINT ' + name + ';' + CHAR(13)
+DECLARE @sql NVARCHAR(MAX) = '';
+
+-- Foreign keys que apuntan a Persona
+SELECT @sql += 'ALTER TABLE ' + QUOTENAME(OBJECT_NAME(parent_object_id)) +
+               ' DROP CONSTRAINT ' + QUOTENAME(name) + ';'
 FROM sys.foreign_keys
 WHERE referenced_object_id = OBJECT_ID('Persona');
 
---  DROP de Defaults y Checks en la tabla Persona
-SELECT @sqlLimpieza += 'ALTER TABLE Persona DROP CONSTRAINT ' + name + ';' + CHAR(13)
+-- Constraints en Persona
+SELECT @sql += 'ALTER TABLE Persona DROP CONSTRAINT ' + QUOTENAME(name) + ';'
 FROM sys.objects
 WHERE parent_object_id = OBJECT_ID('Persona')
-  AND type IN ('D', 'C') -- D=Default, C=Check
-  AND object_id IN (
-      SELECT default_object_id FROM sys.columns WHERE object_id = OBJECT_ID('Persona') AND name IN ('DNI', 'email_personal', 'telefono', 'cbu_cvu')
-      UNION
-      SELECT object_id FROM sys.check_constraints WHERE parent_object_id = OBJECT_ID('Persona') -- Checks a nivel tabla o columna
-  );
+  AND type IN ('D','C','UQ','PK');  -- Default, Check, Unique, Primary Key
 
--- DROP de la Primary Key
-SELECT @sqlLimpieza += 'ALTER TABLE Persona DROP CONSTRAINT ' + name + ';' + CHAR(13)
-FROM sys.key_constraints
-WHERE parent_object_id = OBJECT_ID('Persona') AND type = 'PK';
+-- Índices basados en columnas sensibles
+SELECT @sql += 'DROP INDEX ' + QUOTENAME(i.name) + ' ON Persona;'
+FROM sys.indexes i
+JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
+JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
+WHERE i.object_id = OBJECT_ID('Persona')
+  AND c.name IN ('DNI','email_personal','telefono','cbu_cvu');
 
-
-IF @sqlLimpieza <> ''
+IF @sql <> ''
 BEGIN
-    PRINT @sqlLimpieza; 
-    EXEC sp_executesql @sqlLimpieza;
+    PRINT @sql;
+    EXEC sp_executesql @sql;
 END
 GO
 
 
-ALTER TABLE Persona ADD 
-    DNI_Enc VARBINARY(256),
-    Email_Enc VARBINARY(256),
-    Telefono_Enc VARBINARY(256),
-    CVU_CBU_Enc VARBINARY(256);
+/* ========================================================
+    3) ELIMINAR COLUMNAS CIFRADAS VIEJAS SI EXISTEN
+======================================================== */
+IF EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Persona') AND name = 'DNI_Enc')
+    ALTER TABLE Persona DROP COLUMN DNI_Enc;
+
+IF EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Persona') AND name = 'Email_Enc')
+    ALTER TABLE Persona DROP COLUMN Email_Enc;
+
+IF EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Persona') AND name = 'Telefono_Enc')
+    ALTER TABLE Persona DROP COLUMN Telefono_Enc;
+
+IF EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Persona') AND name = 'CVU_CBU_Enc')
+    ALTER TABLE Persona DROP COLUMN CVU_CBU_Enc;
+GO
+
+
+/* ========================================================
+    4) AGREGAR COLUMNAS CIFRADAS
+======================================================== */
+ALTER TABLE Persona ADD
+    DNI_Enc VARBINARY(256) NULL,
+    Email_Enc VARBINARY(256) NULL,
+    Telefono_Enc VARBINARY(256) NULL,
+    CVU_CBU_Enc VARBINARY(256) NULL;
+GO
+
+
+/* ========================================================
+    5) ACTUALIZAR CIFRADOS
+======================================================== */
+OPEN SYMMETRIC KEY SK_DatosSensibles DECRYPTION BY CERTIFICATE Cert_DatosSensibles;
 GO
 
 UPDATE Persona SET 
@@ -93,19 +112,45 @@ UPDATE Persona SET
     CVU_CBU_Enc = ENCRYPTBYKEY(KEY_GUID('SK_DatosSensibles'), cbu_cvu);
 GO
 
-ALTER TABLE Persona DROP COLUMN cbu_cvu;
-ALTER TABLE Persona DROP COLUMN telefono;
-ALTER TABLE Persona DROP COLUMN DNI;
-ALTER TABLE Persona DROP COLUMN email_personal;
-GO
-
-EXEC sp_rename 'Persona.DNI_Enc', 'DNI', 'COLUMN';
-EXEC sp_rename 'Persona.Email_Enc', 'email_personal', 'COLUMN';
-EXEC sp_rename 'Persona.Telefono_Enc', 'telefono', 'COLUMN';
-EXEC sp_rename 'Persona.CVU_CBU_Enc', 'cbu_cvu', 'COLUMN';
-GO
-
 CLOSE SYMMETRIC KEY SK_DatosSensibles;
 GO
 
+
+/* ========================================================
+    6) ELIMINAR COLUMNAS ORIGINALES
+======================================================== */
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('Persona') AND name='DNI')
+    ALTER TABLE Persona DROP COLUMN DNI;
+
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('Persona') AND name='email_personal')
+    ALTER TABLE Persona DROP COLUMN email_personal;
+
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('Persona') AND name='telefono')
+    ALTER TABLE Persona DROP COLUMN telefono;
+
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('Persona') AND name='cbu_cvu')
+    ALTER TABLE Persona DROP COLUMN cbu_cvu;
+GO
+
+
+/* ========================================================
+    7) RENOMBRAR COLUMNAS CIFRADAS A LOS NOMBRES ORIGINALES
+======================================================== */
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('Persona') AND name='DNI')
+    EXEC sp_rename 'Persona.DNI_Enc','DNI','COLUMN';
+
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('Persona') AND name='email_personal')
+    EXEC sp_rename 'Persona.Email_Enc','email_personal','COLUMN';
+
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('Persona') AND name='telefono')
+    EXEC sp_rename 'Persona.Telefono_Enc','telefono','COLUMN';
+
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id = OBJECT_ID('Persona') AND name='cbu_cvu')
+    EXEC sp_rename 'Persona.CVU_CBU_Enc','cbu_cvu','COLUMN';
+GO
+
+
+/* ========================================================
+    8) RESULTADO FINAL
+======================================================== */
 SELECT * FROM Persona;

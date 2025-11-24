@@ -19,7 +19,7 @@
 
 
 
-CREATE OR ALTER PROCEDURE sp_importar_csv_inquilino_propietarios_datos
+CREATE OR ALTER PROCEDURE spimportar_csv_inquilino_propietarios_datos
     @rutaArchivo NVARCHAR(500) 
 AS
 BEGIN

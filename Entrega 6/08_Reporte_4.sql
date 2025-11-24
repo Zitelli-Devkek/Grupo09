@@ -15,8 +15,10 @@ Zitelli Emanuel (DNI 45.064.107)
 Reporte 4
 Obtenga los 5 (cinco) meses de mayores gastos y los 5 (cinco) de mayores ingresos.*/
 
+USE Com2900G09
+GO
 
-CREATE OR ALTER PROCEDURE dbo.sp_Report_Top5GastosIngresos
+CREATE OR ALTER PROCEDURE dbo.spReport_Top5GastosIngresos
     @id_consorcio INT,
     @fecha_inicio DATE,
     @fecha_fin DATE
