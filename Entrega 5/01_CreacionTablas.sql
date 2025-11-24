@@ -13,6 +13,10 @@ Zitelli Emanuel (DNI 45.064.107)
 
 CREACION DE LAS TABLAS PARA EL PROYECTO
 */
+
+EXEC spcreacionBD
+GO
+
 USE Com2900G09
 GO
 

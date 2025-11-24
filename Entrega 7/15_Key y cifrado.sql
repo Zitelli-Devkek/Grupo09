@@ -55,13 +55,19 @@ FROM sys.objects
 WHERE parent_object_id = OBJECT_ID('Persona')
   AND type IN ('D','C','UQ','PK');  -- Default, Check, Unique, Primary Key
 
--- Índices basados en columnas sensibles
-SELECT @sql += 'DROP INDEX ' + QUOTENAME(i.name) + ' ON Persona;'
+-- Índices normales basados en columnas sensibles (excluye PK y UQ)
+SELECT @sql += 
+       'DROP INDEX ' + QUOTENAME(i.name) + ' ON Persona;' + CHAR(13)
 FROM sys.indexes i
-JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
-JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
+JOIN sys.index_columns ic 
+    ON i.object_id = ic.object_id AND i.index_id = ic.index_id
+JOIN sys.columns c 
+    ON ic.object_id = c.object_id AND ic.column_id = c.column_id
 WHERE i.object_id = OBJECT_ID('Persona')
-  AND c.name IN ('DNI','email_personal','telefono','cbu_cvu');
+  AND c.name IN ('DNI','email_personal','telefono','cbu_cvu')
+  AND i.is_primary_key = 0
+  AND i.is_unique_constraint = 0;
+
 
 IF @sql <> ''
 BEGIN
