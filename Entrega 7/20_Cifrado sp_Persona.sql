@@ -17,6 +17,8 @@
 -- =================================================================
 */
 
+USE Com2900G09;
+GO
 
 
 CREATE OR ALTER PROCEDURE spimportar_csv_inquilino_propietarios_datos

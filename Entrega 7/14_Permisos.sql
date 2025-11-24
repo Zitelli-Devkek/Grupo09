@@ -16,6 +16,9 @@
 -- Zitelli Emanuel (DNI 45.064.107)
 -- =================================================================
 */
+USE Com2900G09;
+GO
+
 CREATE OR ALTER PROCEDURE dbo.sppermisos
 AS
 BEGIN

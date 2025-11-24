@@ -17,8 +17,8 @@
 -- =================================================================
 */
 
-
-
+USE Com2900G09;
+GO
 
 CREATE OR ALTER PROCEDURE dbo.spReportTop3MorososXML
     @id_consorcio INT,
